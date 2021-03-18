@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/singleton.hpp>
+#include <eosiolib/core/eosio/asset.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
+#include <eosiolib/contracts/eosio/singleton.hpp>
 
 namespace eosio {
 

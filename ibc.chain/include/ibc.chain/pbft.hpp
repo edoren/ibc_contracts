@@ -4,8 +4,8 @@
  */
 #pragma once
 
-#include <eosiolib/time.hpp>
-#include <eosiolib/eosio.hpp>
+#include <eosiolib/core/eosio/time.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
 #include <ibc.chain/types.hpp>
 #include <ibc.chain/block_header.hpp>
 

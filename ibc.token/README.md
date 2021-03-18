@@ -431,10 +431,10 @@ Actions called by ibc_plugin
              const name&                            from_chain,
              const transaction_id_type&             orig_trx_id,          // redundant, facilitate indexing and checking
              const std::vector<char>&               orig_trx_packed_trx_receipt,
-             const std::vector<capi_checksum256>&   orig_trx_merkle_path,
+             const std::vector<checksum256>&   orig_trx_merkle_path,
              const uint32_t&                        orig_trx_block_num,   // redundant, facilitate indexing and checking
              const std::vector<char>&               orig_trx_block_header,
-             const std::vector<capi_checksum256>&   orig_trx_block_id_merkle_path,
+             const std::vector<checksum256>&   orig_trx_block_id_merkle_path,
              const uint32_t&                        anchor_block_num,
              const name&                            to,                   // redundant, facilitate indexing and checking
              const asset&                           quantity,             // redundant, facilitate indexing and checking
@@ -459,10 +459,10 @@ Actions called by ibc_plugin
   void cashconfirm( const name&                            from_chain,
                     const transaction_id_type&             cash_trx_id,            // redundant, facilitate indexing and checking
                     const std::vector<char>&               cash_trx_packed_trx_receipt,
-                    const std::vector<capi_checksum256>&   cash_trx_merkle_path,
+                    const std::vector<checksum256>&   cash_trx_merkle_path,
                     const uint32_t&                        cash_trx_block_num,     // redundant, facilitate indexing and checking
                     const std::vector<char>&               cash_trx_block_header,
-                    const std::vector<capi_checksum256>&   cash_trx_block_id_merkle_path,
+                    const std::vector<checksum256>&   cash_trx_block_id_merkle_path,
                     const uint32_t&                        anchor_block_num,
                     const transaction_id_type&             orig_trx_id );          // redundant, facilitate indexing and checking
 ```
@@ -586,7 +586,7 @@ This ensures that every successful cash will be passed on to the peer chain, non
 **How was the original transaction rolled back after cash failed?**  
 There is a line of code in the case function:
 ``` 
-eosio_assert( orig_trx_block_num >= get_cashtrxs_tb_max_orig_trx_block_num(), "orig_trx_block_num error"); 
+eosio::check( orig_trx_block_num >= get_cashtrxs_tb_max_orig_trx_block_num(), "orig_trx_block_num error"); 
 ```
 The meaning of this line of code is that the original transactions on one chain can only be passed to the peer chain
 in incremental order by it's block number.

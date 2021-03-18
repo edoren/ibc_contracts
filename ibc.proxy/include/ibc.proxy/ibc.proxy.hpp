@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/singleton.hpp>
+#include <eosiolib/core/eosio/asset.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
+#include <eosiolib/contracts/eosio/singleton.hpp>
 #include <ibc.chain/types.hpp>
 #include <ibc.token/ibc.token.hpp>
 
@@ -60,7 +60,7 @@ namespace eosio {
          string                  orig_memo;
 
          uint64_t primary_key()const { return id; }
-         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(orig_trx_id.hash); }
+         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(orig_trx_id); }
       };
       eosio::multi_index< "proxytrxs"_n, proxy_trx_info,
       indexed_by<"trxid"_n, const_mem_fun<proxy_trx_info, fixed_bytes<32>, &proxy_trx_info::by_trx_id> >

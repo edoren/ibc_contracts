@@ -32,14 +32,14 @@ namespace eosio {
    digest_type block_header::digest()const
    {
       std::vector<char> buf = pack(*this);
-      ::capi_checksum256 hash;
-      ::sha256( reinterpret_cast<char*>(buf.data()), buf.size(), &hash );
+      checksum256 hash;
+      assert_sha256( reinterpret_cast<char*>(buf.data()), buf.size(), hash );
       return hash;
    }
 
    uint32_t block_header::num_from_id(const block_id_type& id)
    {
-      return endian_reverse_u32(*(uint64_t*)(id.hash));
+      return endian_reverse_u32(*(uint64_t*)(id.data()));
    }
 
    block_id_type block_header::id()const
@@ -47,7 +47,7 @@ namespace eosio {
       union {
          block_id_type result;
          uint64_t hash64[4];
-      }u;
+      }u{.result=block_id_type()};
 
       u.result = digest();
       u.hash64[0] &= 0xffffffff00000000;

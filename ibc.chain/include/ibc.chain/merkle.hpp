@@ -19,8 +19,8 @@ namespace eosio {
 
    inline auto sha256hash(std::pair<digest_type,digest_type> pair_data){
       std::vector<char> buf = pack(pair_data);
-      ::capi_checksum256 hash;
-      ::sha256( reinterpret_cast<char*>(buf.data()), buf.size(), &hash );
+      checksum256 hash;
+      assert_sha256( reinterpret_cast<char*>(buf.data()), buf.size(), hash );
       return hash;
    }
 
@@ -165,10 +165,10 @@ namespace eosio {
     * Very important function!
     */
    void assert_inc_merkle_valid( const incremental_merkle& inc_mkl ){
-      eosio_assert( inc_mkl._node_count != 0 && inc_mkl._active_nodes.size() != 0, "**");
+      eosio::check( inc_mkl._node_count != 0 && inc_mkl._active_nodes.size() != 0, "**");
 
       if ( inc_mkl._active_nodes.size() == 1 ){
-         eosio_assert( inc_mkl._node_count == detail::next_power_of_2(inc_mkl._node_count), "**");
+         eosio::check( inc_mkl._node_count == detail::next_power_of_2(inc_mkl._node_count), "**");
          return;
       }
 
@@ -180,7 +180,7 @@ namespace eosio {
 
       while (current_depth > 1) {
          if (index & 0x1) { // left
-            if ( is_equal_capi_checksum256( top, digest_type()) ){  // the first active node
+            if ( is_equal_checksum256( top, digest_type()) ){  // the first active node
                const auto& left_value = *active_iter;
                ++active_iter;
                top = sha256hash(make_canonical_pair(left_value, left_value));
@@ -188,7 +188,7 @@ namespace eosio {
                top = sha256hash(make_canonical_pair(top, top));
             }
          } else { // right
-            if ( ! is_equal_capi_checksum256( top, digest_type())){
+            if ( ! is_equal_checksum256( top, digest_type())){
                const auto& left_value = *active_iter;
                ++active_iter;
                top = sha256hash(make_canonical_pair(left_value, top));
@@ -200,14 +200,14 @@ namespace eosio {
          index = (index + 1) >> 1;
       }
 
-      eosio_assert(is_equal_capi_checksum256(top, inc_mkl.get_root()), "**");
+      eosio::check(is_equal_checksum256(top, inc_mkl.get_root()), "**");
    }
 
    digest_type get_inc_merkle_node_by_layer( const incremental_merkle& inc_mkl, const uint32_t& layer ) {
-      eosio_assert( inc_mkl._node_count != 0 && inc_mkl._active_nodes.size() != 0, "**");
+      eosio::check( inc_mkl._node_count != 0 && inc_mkl._active_nodes.size() != 0, "**");
 
       auto max_depth = detail::calcluate_max_depth( inc_mkl._node_count );
-      eosio_assert( 1 <= layer && layer <= max_depth, "**");
+      eosio::check( 1 <= layer && layer <= max_depth, "**");
 
       if ( layer == max_depth ){
          return inc_mkl._active_nodes.back();
@@ -229,7 +229,7 @@ namespace eosio {
          }
 
          if ( current_layer == layer ){
-            eosio_assert( ! is_equal_capi_checksum256(current_layer_node, digest_type()), "**");
+            eosio::check( ! is_equal_checksum256(current_layer_node, digest_type()), "**");
             return current_layer_node;
          }
 
@@ -239,7 +239,7 @@ namespace eosio {
          index = index >> 1;
       }
 
-      eosio_assert(false, "**");
+      eosio::check(false, "**");
       return digest_type();
    }
 

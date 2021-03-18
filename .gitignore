@@ -35,7 +35,7 @@ bin/
 build/*
 .DS_Store
 
-CMakeLists.txt
+/CMakeLists.txt
 
 .idea/
 cmake-build-debug

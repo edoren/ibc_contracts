@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include <eosiolib/transaction.hpp>
+#include <eosiolib/contracts/eosio/transaction.hpp>
 #include <ibc.chain/types.hpp>
 
 namespace eosio {
@@ -26,8 +26,8 @@ namespace eosio {
       }
 
       transaction_id_type id()const {
-         capi_checksum256 digest;
-         sha256(packed_trx.data(), packed_trx.size(), &digest);
+         checksum256 digest;
+         assert_sha256(packed_trx.data(), packed_trx.size(), digest);
          return digest;
       }
 

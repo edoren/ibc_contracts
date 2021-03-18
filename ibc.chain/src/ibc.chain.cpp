@@ -32,15 +32,15 @@ namespace eosio {
       _wtmsig_sg.set( _wtmsig_st , _self );
    }
 
-   void chain::setglobal( name              chain_name,
+   ACTION chain::setglobal( name              chain_name,
                           chain_id_type     chain_id,
                           name              consensus_algo,
                           bool              wtmsig_activated,
                           uint32_t          wtmsig_ext_id  ){
       require_auth( _self );
-      eosio_assert( chain_name != ""_n, "chain_name can not be empty");
-      eosio_assert( ! is_equal_capi_checksum256(chain_id, chain_id_type()), "chain_id can not be empty");
-      eosio_assert( consensus_algo == "pipeline"_n || consensus_algo == "batch"_n, "consensus_algo must be pipeline or batch" );
+      eosio::check( chain_name != ""_n, "chain_name can not be empty");
+      eosio::check( ! is_equal_checksum256(chain_id, chain_id_type()), "chain_id can not be empty");
+      eosio::check( consensus_algo == "pipeline"_n || consensus_algo == "batch"_n, "consensus_algo must be pipeline or batch" );
       _gstate.chain_name      = chain_name;
       _gstate.chain_id        = chain_id;
       _gstate.consensus_algo  = consensus_algo;
@@ -49,13 +49,13 @@ namespace eosio {
       _wtmsig_st.ext_id = wtmsig_ext_id;
    }
 
-   void chain::setadmin( name admin ){
+   ACTION chain::setadmin( name admin ){
       require_auth( _self );
       _admin_st.admin = admin;
    }
 
    // init for both pipeline and batch light client
-   void chain::chaininit( const std::vector<char>&      header_data,
+   ACTION chain::chaininit( const std::vector<char>&      header_data,
                           const producer_schedule&      active_schedule,
                           const incremental_merkle&     blockroot_merkle,
                           const name&                   relay ) {
@@ -65,7 +65,7 @@ namespace eosio {
          while ( _sections.begin() != _sections.end() ){ _sections.erase(_sections.begin()); }
          _gmutable = global_mutable{};
       } else {
-         eosio_assert( _chaindb.begin() == _chaindb.end() &&
+         eosio::check( _chaindb.begin() == _chaindb.end() &&
                        _prodsches.begin() == _prodsches.end() &&
                        _sections.begin() == _sections.end() &&
                        _gmutable.last_anchor_block_num == 0, "the light client has already been initialized" );
@@ -122,33 +122,33 @@ namespace eosio {
 
    // ------ section related functions ------ //
 
-   void chain::pushsection( const std::vector<char>&    headers_data,
+   ACTION chain::pushsection( const std::vector<char>&    headers_data,
                             const incremental_merkle&   blockroot_merkle,
                             const name&                 relay ) {
       require_relay_auth( _self, relay );
 
-      eosio_assert( _gstate.consensus_algo == "pipeline"_n, "consensus algorithm must be pipeline");
+      eosio::check( _gstate.consensus_algo == "pipeline"_n, "consensus algorithm must be pipeline");
 
       std::vector<signed_block_header> headers = unpack<std::vector<signed_block_header>>( headers_data );
-      eosio_assert( _sections.begin() != _sections.end(), "the light client has not been initialized yet");
+      eosio::check( _sections.begin() != _sections.end(), "the light client has not been initialized yet");
       const auto& last_section = *(_sections.rbegin());
 
       uint32_t front_block_num = headers.front().block_num();
-      eosio_assert ( front_block_num >= last_section.first, "front_block_num >= last_section.first must be true");
+      eosio::check ( front_block_num >= last_section.first, "front_block_num >= last_section.first must be true");
 
       bool create_section = false;
       if ( front_block_num > last_section.last + 1 ) {      // create new section
-         eosio_assert( last_section.valid , "last section must be completed first");
+         eosio::check( last_section.valid , "last section must be completed first");
          create_section = true;
       }
       else if ( front_block_num == last_section.first ) {   // delete old and create new section
-         eosio_assert( ! is_equal_capi_checksum256(headers.front().id(), _chaindb.get( front_block_num ).block_id), "first block header repeated");
+         eosio::check( ! is_equal_checksum256(headers.front().id(), _chaindb.get( front_block_num ).block_id), "first block header repeated");
          if ( ! remove_invalid_last_section()){ return; }
          create_section = true;
       }
 
       if ( create_section ){
-         eosio_assert( headers.size() >= 30, "new section's size must not less then 30");
+         eosio::check( headers.size() >= 30, "new section's size must not less then 30");
          new_section( headers.front(), blockroot_merkle );
          headers.erase( headers.begin() );
       }
@@ -183,17 +183,17 @@ namespace eosio {
       if ( _wtmsig_st.activated ){
          new_producers = header.get_ext_new_producers( _wtmsig_st.ext_id );
       }
-      eosio_assert( ! new_producers, "section root header can not contain new_producers" );
+      eosio::check( ! new_producers, "section root header can not contain new_producers" );
 
       auto header_block_num = header.block_num();
 
       const auto& last_section = *(_sections.rbegin());
-      eosio_assert( last_section.valid, "last_section is not valid" );
-      eosio_assert( header_block_num > last_section.last + 1, "header_block_num should larger then last_section.last + 1" );
+      eosio::check( last_section.valid, "last_section is not valid" );
+      eosio::check( header_block_num > last_section.last + 1, "header_block_num should larger then last_section.last + 1" );
 
       auto active_schedule_id = get_section_last_active_schedule_id( last_section );
       auto version = _prodsches.get( active_schedule_id ).schedule.version;
-      eosio_assert( header.schedule_version == version, "schedule_version not equal to previous one" );
+      eosio::check( header.schedule_version == version, "schedule_version not equal to previous one" );
 
       auto block_signing_key = get_public_key_by_producer( active_schedule_id, header.producer );
 
@@ -259,13 +259,13 @@ namespace eosio {
       auto last_section_first = last_section.first;
       auto last_section_last = last_section.last;
       
-      eosio_assert( header_block_num > last_section_first, "new header number must larger then section root number" );
-      eosio_assert( header_block_num <= last_section_last + 1, "unlinkable block" );
+      eosio::check( header_block_num > last_section_first, "new header number must larger then section root number" );
+      eosio::check( header_block_num <= last_section_last + 1, "unlinkable block" );
 
       // delete old branch
       if ( header_block_num < last_section_last + 1){
          auto result = _chaindb.get( header_block_num );
-         eosio_assert( std::memcmp(header_block_id.hash, result.block_id.hash, 32) != 0, ("block repeated: " + std::to_string(header_block_num)).c_str() );
+         eosio::check( header_block_id != result.block_id, ("block repeated: " + std::to_string(header_block_num)).c_str() );
 
          _sections.modify( last_section, same_payer, [&]( auto& r ) {
             r.valid = header_block_num - last_section_first < lib_depth ? false : last_section.valid;
@@ -281,7 +281,7 @@ namespace eosio {
 
       // verify linkable
       auto last_bhs = _chaindb.get( header_block_num - 1 );   // don't make pointer or const, for it needs change
-      eosio_assert(std::memcmp(last_bhs.block_id.hash, header.previous.hash, 32) == 0 , "unlinkable block" );
+      eosio::check(last_bhs.block_id == header.previous , "unlinkable block" );
 
       // verify new block
       block_header_state bhs;
@@ -321,7 +321,7 @@ namespace eosio {
             /* important! infact header_block_num - last_section.newprod_block_num should be approximately equal to 325 */
 
             if ( ! only_one_eosio_bp() ){
-               eosio_assert( header_block_num - last_section.newprod_block_num > 20 * 12, "header_block_num - last_section.newprod_block_num > 20 * 12 failed");
+               eosio::check( header_block_num - last_section.newprod_block_num > 20 * 12, "header_block_num - last_section.newprod_block_num > 20 * 12 failed");
             }
 
             // replace
@@ -345,7 +345,7 @@ namespace eosio {
 
       // handle new_producers
       if ( new_producers ){  // has new producers
-         eosio_assert( new_producers->version == header.schedule_version + 1, "new_producers version invalid" );
+         eosio::check( new_producers->version == header.schedule_version + 1, "new_producers version invalid" );
 
          _sections.modify( last_section, same_payer, [&]( auto& r ) {
             r.valid = false;
@@ -402,7 +402,7 @@ namespace eosio {
       const static uint32_t max_delete = 50;
 
       auto it = --_sections.end();
-      eosio_assert( false == it->valid, "last section is valid, can't remove");
+      eosio::check( false == it->valid, "last section is valid, can't remove");
 
       bool finished = max_delete >= (it->last - it->first + 1) ? true : false;
       for( uint64_t num = std::max(it->first, it->last - max_delete + 1); num <= it->last; ++num ){
@@ -458,13 +458,13 @@ namespace eosio {
    }
 
    static const uint32_t max_delete = 150; // max delete 150 records per time, in order to avoid exceed cpu limit
-   void chain::rmfirstsctn( const name& relay ){
+   ACTION chain::rmfirstsctn( const name& relay ){
       require_relay_auth( _self, relay );
 
       auto it = _sections.begin();
       auto next = ++it;
-      eosio_assert( next != _sections.end(), "can not delete the last section");
-      eosio_assert( next->valid == true, "next section must be valid");
+      eosio::check( next != _sections.end(), "can not delete the last section");
+      eosio::check( next->valid == true, "next section must be valid");
 
       uint32_t count = 0;
       auto begin = _sections.begin();
@@ -532,16 +532,16 @@ namespace eosio {
 
       // section create
       if ( producers.empty() ){
-         eosio_assert( block_nums.empty(), "internal error, producers not consistent with block_nums" );
-         eosio_assert( prod != name() && num != 0, "internal error, invalid parameters" );
+         eosio::check( block_nums.empty(), "internal error, producers not consistent with block_nums" );
+         eosio::check( prod != name() && num != 0, "internal error, invalid parameters" );
          producers.push_back( prod );
          block_nums.push_back( num );
          return;
       }
 
-      eosio_assert( tslot != 0, "internal error,tslot == 0");
-      eosio_assert( sch.producers.size() > 15, "producers.size() must greater then 15" ); // should be equal to 21 infact
-      eosio_assert( get_scheduled_producer( tslot, sch ) == prod, "scheduled producer validate failed");
+      eosio::check( tslot != 0, "internal error,tslot == 0");
+      eosio::check( sch.producers.size() > 15, "producers.size() must greater then 15" ); // should be equal to 21 infact
+      eosio::check( get_scheduled_producer( tslot, sch ) == prod, "scheduled producer validate failed");
 
       // same producer, do nothing
       if( prod == producers.back() ){
@@ -552,7 +552,7 @@ namespace eosio {
       int size = producers.size();
       int count = size > 15 ? 15 : size;
       for ( int i = 0; i < count ; ++i){
-         eosio_assert( prod != producers[ size - 1 - i ] , "producer can not repeat within last 15 producers" );
+         eosio::check( prod != producers[ size - 1 - i ] , "producer can not repeat within last 15 producers" );
       }
 
       // Check if the distance from producers.back() to prod is not greater then MAXSPAN
@@ -569,9 +569,9 @@ namespace eosio {
          ++i;
       }
       if ( index_this > index_last ){
-         eosio_assert( index_this - index_last <= MAXSPAN, "exceed max span" );
+         eosio::check( index_this - index_last <= MAXSPAN, "exceed max span" );
       } else {
-         eosio_assert( index_last - index_this >= sch.producers.size() - MAXSPAN, "exceed max span" );
+         eosio::check( index_last - index_this >= sch.producers.size() - MAXSPAN, "exceed max span" );
       }
 
       // add
@@ -587,7 +587,7 @@ namespace eosio {
 
    void section_type::clear_from( uint32_t num ){
       int pos = 0;
-      eosio_assert( first < num && num <= last , "invalid number" );
+      eosio::check( first < num && num <= last , "invalid number" );
 
       while ( num <= block_nums.back() && !producers.empty() && !block_nums.empty() ){
          producers.pop_back();
@@ -598,19 +598,19 @@ namespace eosio {
 
    // ------ pbft related functions ------ //
 
-   void chain::pushblkcmits( const std::vector<char>&    headers_data,
+   ACTION chain::pushblkcmits( const std::vector<char>&    headers_data,
                              const incremental_merkle&   blockroot_merkle,
                              const std::vector<char>&    proof_data,
                              const name&                 proof_type,
                              const name&                 relay ) {
       require_relay_auth( _self, relay );
 
-      eosio_assert( _gstate.consensus_algo == "batch"_n, "consensus algorithm must be batch");
-      eosio_assert( _chaindb.begin() != _chaindb.end(), "the light client has not been initialized yet");
+      eosio::check( _gstate.consensus_algo == "batch"_n, "consensus algorithm must be batch");
+      eosio::check( _chaindb.begin() != _chaindb.end(), "the light client has not been initialized yet");
 
       // unpack and make basic assert
       std::vector<signed_block_header> headers = unpack<std::vector<signed_block_header>>( headers_data );
-      eosio_assert( _chaindb.find( headers.front().block_num() ) == _chaindb.end(), "the first block header aready exist");
+      eosio::check( _chaindb.find( headers.front().block_num() ) == _chaindb.end(), "the first block header aready exist");
 
       std::vector<pbft_commit> commits;
       std::vector<pbft_checkpoint> checkpoints;
@@ -618,16 +618,16 @@ namespace eosio {
          commits = unpack<std::vector<pbft_commit>>( proof_data );
       } else if ( proof_type == "checkpoint"_n ){
          checkpoints = unpack<std::vector<pbft_checkpoint>>( proof_data );
-      } else { eosio_assert( false, "invalid proof_type name"); }
+      } else { eosio::check( false, "invalid proof_type name"); }
 
-      eosio_assert( headers.size() > 0, "headers can not be empty");
-      eosio_assert( blockroot_merkle._node_count != 0 && blockroot_merkle._active_nodes.size() != 0, "blockroot_merkle can not be empty");
+      eosio::check( headers.size() > 0, "headers can not be empty");
+      eosio::check( blockroot_merkle._node_count != 0 && blockroot_merkle._active_nodes.size() != 0, "blockroot_merkle can not be empty");
 
       if ( ! only_one_eosio_bp() ){
-         eosio_assert( commits.size() >= 15 || checkpoints.size() >= 15, "size of proof must not less then 15");
+         eosio::check( commits.size() >= 15 || checkpoints.size() >= 15, "size of proof must not less then 15");
       }
 
-      eosio_assert( commits.size() <= 40 && checkpoints.size() <= 40, "size of proof too large");
+      eosio::check( commits.size() <= 40 && checkpoints.size() <= 40, "size of proof too large");
 
       uint32_t first_num = headers.front().block_num();
       uint32_t last_num = headers.back().block_num();
@@ -636,7 +636,7 @@ namespace eosio {
       push_header( headers.front(), blockroot_merkle );
       headers.erase( headers.begin() );
       for ( const auto & header : headers ){
-         eosio_assert( !header.new_producers,"only the first block header can contain new_producers"); // bos chain
+         eosio::check( !header.new_producers,"only the first block header can contain new_producers"); // bos chain
          remove_header_if_exist( header.block_num() );
          push_header( header );
       }
@@ -647,14 +647,14 @@ namespace eosio {
          uint32_t first_view = commits.front().view;
 
          for ( auto commit : commits ){
-            eosio_assert( commit.view == first_view, "assert commit.view == first_view failed");
-            eosio_assert( commit.common.type == 1, "not commit message");
+            eosio::check( commit.view == first_view, "assert commit.view == first_view failed");
+            eosio::check( commit.common.type == 1, "not commit message");
 
             uint32_t block_num = commit.block_num();
-            eosio_assert( first_num <= block_num && block_num <= last_num, "invalid commit block_num");
+            eosio::check( first_num <= block_num && block_num <= last_num, "invalid commit block_num");
 
             auto bhs = _chaindb.get( block_num );
-            eosio_assert( is_equal_capi_checksum256(commit.block_id(), bhs.block_id), "invalid block_id");
+            eosio::check( is_equal_checksum256(commit.block_id(), bhs.block_id), "invalid block_id");
 
             auto pub_key = get_public_key_form_signature( commit.digest(_gstate.chain_id), commit.sender_signature );
             auto producer = get_producer_by_public_key(bhs.active_schedule_id, pub_key);
@@ -664,13 +664,13 @@ namespace eosio {
          }
       } else if ( proof_type == "checkpoint"_n ) {
          for (auto checkpoint : checkpoints) {
-            eosio_assert( checkpoint.common.type == 2, "not checkpoint message");
+            eosio::check( checkpoint.common.type == 2, "not checkpoint message");
 
             uint32_t block_num = checkpoint.block_num();
-            eosio_assert(first_num <= block_num && block_num <= last_num, "invalid checkpoint block_num");
+            eosio::check(first_num <= block_num && block_num <= last_num, "invalid checkpoint block_num");
 
             auto bhs = _chaindb.get(block_num);
-            eosio_assert(is_equal_capi_checksum256(checkpoint.block_id(), bhs.block_id), "invalid block_id");
+            eosio::check(is_equal_checksum256(checkpoint.block_id(), bhs.block_id), "invalid block_id");
 
             auto pub_key = get_public_key_form_signature( checkpoint.digest(_gstate.chain_id), checkpoint.sender_signature );
             auto producer = get_producer_by_public_key(bhs.active_schedule_id, pub_key);
@@ -681,7 +681,7 @@ namespace eosio {
       }
 
       if ( ! only_one_eosio_bp() ){
-         eosio_assert( producers.size() >= 15, "assert producers.size() >= 15 failed");
+         eosio::check( producers.size() >= 15, "assert producers.size() >= 15 failed");
       }
 
       // delete headers [first_num + 1, last_num]
@@ -736,7 +736,7 @@ namespace eosio {
       auto header_block_id = header.id();
 
       auto last_bhs = *(_chaindb.rbegin());  // don't make pointer or const, for it needs change
-      eosio_assert( header_block_num > last_bhs.block_num, "invalid header_block_num" );
+      eosio::check( header_block_num > last_bhs.block_num, "invalid header_block_num" );
 
       /**
        * construct bhs and verify signature
@@ -752,7 +752,7 @@ namespace eosio {
       } else if ( header.schedule_version == last_bhs.header.schedule_version + 1 ){
          bhs.active_schedule_id  = last_bhs.pending_schedule_id;
       } else {
-         eosio_assert( false, "invalid schedule_version");
+         eosio::check( false, "invalid schedule_version");
       }
       bhs.pending_schedule_id = last_bhs.pending_schedule_id;
 
@@ -762,7 +762,7 @@ namespace eosio {
       }
 
       if ( new_producers ){
-         eosio_assert( new_producers->version == header.schedule_version + 1, "new_producers version invalid" );
+         eosio::check( new_producers->version == header.schedule_version + 1, "new_producers version invalid" );
 
          auto new_schedule_id = _prodsches.available_primary_key();
          _prodsches.emplace( _self, [&]( auto& r ) {
@@ -784,10 +784,10 @@ namespace eosio {
          bhs.is_anchor_block = true;
 
          // update last_anchor_block_num
-         eosio_assert( header_block_num > _gmutable.last_anchor_block_num, "assert header_block_num > _gmutable.last_anchor_block_num failed");
+         eosio::check( header_block_num > _gmutable.last_anchor_block_num, "assert header_block_num > _gmutable.last_anchor_block_num failed");
          _gmutable.last_anchor_block_num = header_block_num;
       } else {
-         eosio_assert( header_block_num == last_bhs.block_num + 1, "assert header_block_num == last_bhs.block_num + 1 failed");
+         eosio::check( header_block_num == last_bhs.block_num + 1, "assert header_block_num == last_bhs.block_num + 1 failed");
          last_bhs.blockroot_merkle.append( last_bhs.block_id );
          bhs.blockroot_merkle = std::move(last_bhs.blockroot_merkle);
       }
@@ -817,38 +817,37 @@ namespace eosio {
 
    digest_type chain::bhs_sig_digest( const block_header_state& hs ) const {
       auto it = _prodsches.find( hs.pending_schedule_id );
-      eosio_assert( it != _prodsches.end(), "internal error: block_header_state::sig_digest" );
+      eosio::check( it != _prodsches.end(), "internal error: block_header_state::sig_digest" );
       auto header_bmroot = get_checksum256( std::make_pair( hs.header.digest(), hs.blockroot_merkle.get_root() ));
       return get_checksum256( std::make_pair( header_bmroot, it->schedule_hash ));
    }
 
-   capi_public_key chain::get_public_key_form_signature( digest_type digest, signature_type sig ) const {
-      capi_public_key pub_key;
-      size_t pubkey_size = recover_key( reinterpret_cast<const capi_checksum256*>(digest.hash),
-                                        reinterpret_cast<const char*>(sig.data), 66, pub_key.data, 34 );
-      eosio_assert( pubkey_size == 34, "pubkey_size != 34");
+   public_key chain::get_public_key_form_signature( digest_type digest, signature_type sig ) const {
+      public_key pub_key = recover_key( digest, sig );
+      assert_recover_key(digest, sig, pub_key);
+      // eosio::check( pubkey_size == 34, "pubkey_size != 34");
       return pub_key;
    }
 
-   capi_public_key chain::get_public_key_by_producer( uint64_t id, const name& producer ) const {
+   public_key chain::get_public_key_by_producer( uint64_t id, const name& producer ) const {
       auto it = _prodsches.find(id);
-      eosio_assert( it != _prodsches.end(), "producer schedule id not found" );
+      eosio::check( it != _prodsches.end(), "producer schedule id not found" );
       const producer_schedule& ps = it->schedule;
       for( auto pk : ps.producers){
          if( pk.producer_name == producer){
-            capi_public_key cpk;
-            eosio::datastream<char*> pubkey_ds( reinterpret_cast<char*>(cpk.data), sizeof(capi_signature) );
+            public_key cpk;
+            eosio::datastream<char*> pubkey_ds( reinterpret_cast<char*>(std::get<0>(cpk).data()), sizeof(signature) );
             pubkey_ds << pk.block_signing_key;
             return cpk;
          }
       }
-      eosio_assert(false, (string("producer not found: ") + producer.to_string()).c_str() );
-      return capi_public_key(); //never excute, just used to suppress "no return" warning
+      eosio::check(false, (string("producer not found: ") + producer.to_string()).c_str() );
+      return public_key(); //never excute, just used to suppress "no return" warning
    }
 
-   name chain::get_producer_by_public_key( uint64_t id, const capi_public_key& pub_key ) const {
+   name chain::get_producer_by_public_key( uint64_t id, const public_key& pub_key ) const {
       auto it = _prodsches.find(id);
-      eosio_assert( it != _prodsches.end(), "producer schedule id not found" );
+      eosio::check( it != _prodsches.end(), "producer schedule id not found" );
       const producer_schedule& ps = it->schedule;
 
       auto key = unpack<public_key>(pack(pub_key));
@@ -861,16 +860,14 @@ namespace eosio {
    }
 
    void chain::assert_producer_signature(const digest_type& digest,
-                                         const capi_signature& signature,
-                                         const capi_public_key& pub_key ) const {
-      assert_recover_key( reinterpret_cast<const capi_checksum256*>( digest.hash ),
-                          reinterpret_cast<const char*>( signature.data ), 66,
-                          reinterpret_cast<const char*>( pub_key.data ), 34 );
+                                         const signature& signature,
+                                         const public_key& pub_key ) const {
+      assert_recover_key( digest, signature, pub_key );
    }
 
    // ------ force init ------ //
 
-   void chain::forceinit(){
+   ACTION chain::forceinit(){
       check_admin_auth();
       while ( _prodsches.begin() != _prodsches.end() ){ _prodsches.erase(_prodsches.begin()); }
       while ( _sections.begin() != _sections.end() ){ _sections.erase(_sections.begin()); }
@@ -891,7 +888,7 @@ namespace eosio {
    }
 
    bool chain::only_one_eosio_bp(){
-      eosio_assert( _sections.begin() != _sections.end(), "table sections is empty");
+      eosio::check( _sections.begin() != _sections.end(), "table sections is empty");
       const auto& last_section = *(_sections.rbegin());
       auto active_schedule_id = _chaindb.get( last_section.last ).active_schedule_id;
       const auto& active_schedule = _prodsches.get( active_schedule_id ).schedule;
@@ -899,36 +896,36 @@ namespace eosio {
       return pds.size() == 1 && pds.front().producer_name == "eosio"_n;
    }
 
-   void chain::relay( string action, name relay ) {
+   ACTION chain::relay( string action, name relay ) {
       check_admin_auth();
       auto existing = _relays.find( relay.value );
 
       if ( action == "add" ) {
-         eosio_assert( existing == _relays.end(), "relay already exist" );
+         eosio::check( existing == _relays.end(), "relay already exist" );
          _relays.emplace( _self, [&]( auto& r ){ r.relay = relay; } );
          return;
       }
 
       if ( action == "remove" ) {
-         eosio_assert( existing != _relays.end(), "relay not exist" );
+         eosio::check( existing != _relays.end(), "relay not exist" );
          _relays.erase( existing );
          return;
       }
 
-      eosio_assert(false,"unknown action");
+      eosio::check(false,"unknown action");
    }
 
-   void chain::reqrelayauth( ){
+   ACTION chain::reqrelayauth( ){
       if ( check_relay_auth ){
-         eosio_assert( false, "check_relay_auth == true" );
+         eosio::check( false, "check_relay_auth == true" );
       } else {
-         eosio_assert( false, "check_relay_auth == false" );
+         eosio::check( false, "check_relay_auth == false" );
       }
    }
 
    void chain::check_admin_auth(){
       if ( ! has_auth(_self) ){
-         eosio_assert( _admin_st.admin != name() && is_account( _admin_st.admin ),"admin account not exist");
+         eosio::check( _admin_st.admin != name() && is_account( _admin_st.admin ),"admin account not exist");
          require_auth( _admin_st.admin );
       }
    }
@@ -957,4 +954,4 @@ namespace eosio {
 
 } /// namespace eosio
 
-EOSIO_DISPATCH( eosio::chain, (setglobal)(chaininit)(pushsection)(rmfirstsctn)(pushblkcmits)(forceinit)(relay)(reqrelayauth)(setadmin) )
+// EOSIO_DISPATCH( eosio::chain, (setglobal)(chaininit)(pushsection)(rmfirstsctn)(pushblkcmits)(forceinit)(relay)(reqrelayauth)(setadmin) )

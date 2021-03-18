@@ -14,23 +14,23 @@ namespace eosio{
       }
    }
 
-   capi_checksum256 get_trx_id( bool assert_only_one_action = true ) {
-      capi_checksum256 trx_id;
+   checksum256 get_trx_id( bool assert_only_one_action = true ) {
+      checksum256 trx_id;
       std::vector<char> trx_bytes;
       size_t trx_size = transaction_size();
       trx_bytes.resize(trx_size);
       read_transaction(trx_bytes.data(), trx_size);
-      sha256( trx_bytes.data(), trx_size, &trx_id );
+      assert_sha256( trx_bytes.data(), trx_size, trx_id );
       
       if ( assert_only_one_action ) {
          auto trx = unpack<transaction>(trx_bytes.data(), trx_size);
-         eosio_assert( trx.actions.size() == 1, "transction contains more then one action");
+         eosio::check( trx.actions.size() == 1, "transction contains more then one action");
       }
       return trx_id;
    }
 
    uint32_t get_block_time_slot() {
-      return  ( current_time() / 1000 - 946684800000 ) / 500;
+      return  ( current_time_point().time_since_epoch().count() / 1000 - 946684800000 ) / 500;
    }
 
    string to_hex( const uint8_t* d, uint32_t s )
@@ -46,19 +46,19 @@ namespace eosio{
       char lower_c = tolower(c);
       const string hex_code = "0123456789abcdef";
       auto pos = hex_code.find(lower_c);
-      eosio_assert(pos != std::string::npos, "it's not a hex char");
+      eosio::check(pos != std::string::npos, "it's not a hex char");
       return pos;
    }
 
-   string capi_checksum256_to_string( capi_checksum256 value ){
-      return to_hex( value.hash, 32 );
+   string checksum256_to_string( checksum256 value ){
+      return to_hex( (uint8_t*)value.data(), 32 );
    }
 
-   capi_checksum256 string_to_capi_checksum256( const string& str ){
-      eosio_assert( str.size() == 64, "capi_checksum256 string size must be 64");
-      capi_checksum256 ret;
+   checksum256 string_to_checksum256( const string& str ){
+      eosio::check( str.size() == 64, "checksum256 string size must be 64");
+      checksum256 ret;
       for (int i = 0; i < 32; ++i ){
-         ret.hash[i] = ( hex_char_to_uint8(str[2*i]) << 4 ) + hex_char_to_uint8(str[2*i+1]);
+         ((uint8_t*)ret.data())[i] = ( hex_char_to_uint8(str[2*i]) << 4 ) + hex_char_to_uint8(str[2*i+1]);
       }
       return ret;
    }
@@ -89,7 +89,7 @@ namespace eosio{
 
       // --- get receiver ---
       auto pos = memo.find("@");
-      eosio_assert( pos != std::string::npos, ( string("memo format error, didn't find charactor \'@\' in memo, correct format: ") + format ).c_str() );
+      eosio::check( pos != std::string::npos, ( string("memo format error, didn't find charactor \'@\' in memo, correct format: ") + format ).c_str() );
       string receiver_str = memo.substr( 0, pos );
       trim( receiver_str );
       info.receiver = name( receiver_str );
@@ -109,8 +109,8 @@ namespace eosio{
          trim( info.notes );
       }
 
-      eosio_assert( info.receiver != name(), ( string("memo format error, receiver not provided, correct format: ") + format ).c_str() );
-      eosio_assert( info.peerchain != name(), ( string("memo format error, chain not provided, correct format: ") + format ).c_str() );
+      eosio::check( info.receiver != name(), ( string("memo format error, receiver not provided, correct format: ") + format ).c_str() );
+      eosio::check( info.peerchain != name(), ( string("memo format error, chain not provided, correct format: ") + format ).c_str() );
       return info;
    }
 

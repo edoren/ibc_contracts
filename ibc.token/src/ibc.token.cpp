@@ -3,8 +3,8 @@
  *  @copyright defined in eos/LICENSE.txt
  */
 
-#include <eosiolib/action.hpp>
-#include <eosiolib/transaction.hpp>
+#include <eosiolib/contracts/eosio/action.hpp>
+#include <eosiolib/contracts/eosio/transaction.hpp>
 #include <ibc.chain/ibc.chain.hpp>
 #include <ibc.token/ibc.token.hpp>
 
@@ -54,12 +54,12 @@ namespace eosio {
 
    void token::setadmin( name admin ){
       require_auth( _self );
-      eosio_assert(is_account(admin), "admin account is not exist");
+      eosio::check(is_account(admin), "admin account is not exist");
       _admin_st.admin = admin;
    }
 
    void token::setproxy( name proxy ){
-      eosio_assert(is_account(proxy), "proxy account is not exist");
+      eosio::check(is_account(proxy), "proxy account is not exist");
       if ( _proxy_st.proxy == name() ){
          check_admin_auth();
          _proxy_st.proxy = proxy;
@@ -71,7 +71,7 @@ namespace eosio {
 
    void token::setprchproxy( name peerchain_name, name proxy_account){
       auto itr = _peerchains.find( peerchain_name.value );
-      eosio_assert( itr != _peerchains.end(), "peerchain has not registered");
+      eosio::check( itr != _peerchains.end(), "peerchain has not registered");
 
       auto itr2 = _peerchains2.find( peerchain_name.value );
       if ( itr2 == _peerchains2.end() ){
@@ -104,15 +104,15 @@ namespace eosio {
                              bool           active ){
       check_admin_auth();
 
-      eosio_assert( peerchain_name != name(), "peerchain_name can not be empty");
-      eosio_assert( peerchain_info.size() < 256, "peerchain_info has more than 256 bytes");
-      eosio_assert( peerchain_ibc_token_contract != name(), "peerchain_ibc_token_contract can not be empty");
-      eosio_assert( is_account( thischain_ibc_chain_contract ), "thischain_ibc_chain_contract account does not exist");
-      eosio_assert( is_account( thischain_free_account ), "thischain_free_account does not exist");
+      eosio::check( peerchain_name != name(), "peerchain_name can not be empty");
+      eosio::check( peerchain_info.size() < 256, "peerchain_info has more than 256 bytes");
+      eosio::check( peerchain_ibc_token_contract != name(), "peerchain_ibc_token_contract can not be empty");
+      eosio::check( is_account( thischain_ibc_chain_contract ), "thischain_ibc_chain_contract account does not exist");
+      eosio::check( is_account( thischain_free_account ), "thischain_free_account does not exist");
 
-      eosio_assert( 1 <= max_original_trxs_per_block && max_original_trxs_per_block <= 10 ,"max_original_trxs_per_block must in range [1,10]");
-      eosio_assert( 500 <= max_origtrxs_table_records && max_origtrxs_table_records <= 2000 ,"max_origtrxs_table_records must in range [500,2000]");
-      eosio_assert( 1000 <= cache_cashtrxs_table_records && cache_cashtrxs_table_records <= 2000 ,"cache_cashtrxs_table_records must in range [1000,2000]");
+      eosio::check( 1 <= max_original_trxs_per_block && max_original_trxs_per_block <= 10 ,"max_original_trxs_per_block must in range [1,10]");
+      eosio::check( 500 <= max_origtrxs_table_records && max_origtrxs_table_records <= 2000 ,"max_origtrxs_table_records must in range [500,2000]");
+      eosio::check( 1000 <= cache_cashtrxs_table_records && cache_cashtrxs_table_records <= 2000 ,"cache_cashtrxs_table_records must in range [1000,2000]");
 
       auto itr = _peerchains.find( peerchain_name.value );
       if ( itr != _peerchains.end() ){ _peerchains.erase( itr );}
@@ -150,7 +150,7 @@ namespace eosio {
          _peerchains.modify( chain, same_payer, [&]( auto& r ) { r.active = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::regacpttoken( name        original_contract,
@@ -169,18 +169,18 @@ namespace eosio {
                              bool        active ){
       check_admin_auth();
 
-      eosio_assert( is_account( original_contract ), "original_contract account does not exist");
-      eosio_assert( is_account( administrator ), "administrator account does not exist");
+      eosio::check( is_account( original_contract ), "original_contract account does not exist");
+      eosio::check( is_account( administrator ), "administrator account does not exist");
 
       /// When multiple chains make up a ibc hub system, to avoid unnecessary confusion, symbols should be unique in
       /// the whole multi-chain IBC system
-      eosio_assert( _stats.find(max_accept.symbol.code().raw()) == _stats.end() || original_contract == _self,
+      eosio::check( _stats.find(max_accept.symbol.code().raw()) == _stats.end() || original_contract == _self,
             "token symbol conflict in table 'stats' and 'accepts'");
 
-      eosio_assert( max_accept.is_valid(), "invalid max_accept");
-      eosio_assert( max_accept.amount > 0, "max_accept must be positive");
+      eosio::check( max_accept.is_valid(), "invalid max_accept");
+      eosio::check( max_accept.amount > 0, "max_accept must be positive");
       auto symbol = max_accept.symbol;
-      eosio_assert( min_once_transfer.symbol    == symbol &&
+      eosio::check( min_once_transfer.symbol    == symbol &&
                     max_once_transfer.symbol    == symbol &&
                     max_daily_transfer.symbol   == symbol &&
                     service_fee_fixed.symbol    == symbol &&
@@ -191,14 +191,14 @@ namespace eosio {
                     service_fee_fixed.amount    >= 0 &&
                     failed_fee.amount           >= 0 , "invalid parameters");
 
-      eosio_assert( organization.size() < 256, "organization has more than 256 bytes");
-      eosio_assert( website.size() < 256, "website has more than 256 bytes");
+      eosio::check( organization.size() < 256, "organization has more than 256 bytes");
+      eosio::check( website.size() < 256, "website has more than 256 bytes");
 
-      eosio_assert( service_fee_mode == "fixed"_n || service_fee_mode == "ratio"_n, "invalid service_fee_mode");
-      eosio_assert( 0 <= service_fee_ratio && service_fee_ratio <= 0.05 , "invalid service_fee_ratio");
+      eosio::check( service_fee_mode == "fixed"_n || service_fee_mode == "ratio"_n, "invalid service_fee_mode");
+      eosio::check( 0 <= service_fee_ratio && service_fee_ratio <= 0.05 , "invalid service_fee_ratio");
 
-      eosio_assert( service_fee_fixed.amount * 5 <= min_once_transfer.amount, "service_fee_fixed.amount * 5 <= min_once_transfer.amount assert failed");
-      eosio_assert( failed_fee.amount * 10 <= min_once_transfer.amount, "failed_fee.amount * 10 <= min_once_transfer.amount assert failed");
+      eosio::check( service_fee_fixed.amount * 5 <= min_once_transfer.amount, "service_fee_fixed.amount * 5 <= min_once_transfer.amount assert failed");
+      eosio::check( failed_fee.amount * 10 <= min_once_transfer.amount, "failed_fee.amount * 10 <= min_once_transfer.amount assert failed");
 
       _accepts.emplace( _self, [&]( auto& r ){
          r.original_contract  = original_contract;
@@ -225,36 +225,36 @@ namespace eosio {
 
    void token::setacptasset( symbol_code symcode, string which, asset quantity ) {
       const auto& acpt = get_currency_accept( symcode );
-      eosio_assert( quantity.symbol == acpt.accept.symbol, "invalid symbol" );
+      eosio::check( quantity.symbol == acpt.accept.symbol, "invalid symbol" );
 
       require_auth( acpt.administrator );
 
       if ( which == "max_accept" ){
-         eosio_assert( quantity.amount >= acpt.accept.amount, "max_accept.amount should not less then accept.amount");
+         eosio::check( quantity.amount >= acpt.accept.amount, "max_accept.amount should not less then accept.amount");
          _accepts.modify( acpt, same_payer, [&]( auto& r ) { r.max_accept = quantity; });
          return;
       }
       if ( which == "min_once_transfer" ){
-         eosio_assert( 0 < quantity.amount && quantity.amount < acpt.max_once_transfer.amount, "min_once_transfer invalid");
+         eosio::check( 0 < quantity.amount && quantity.amount < acpt.max_once_transfer.amount, "min_once_transfer invalid");
          _accepts.modify( acpt, same_payer, [&]( auto& r ) { r.min_once_transfer = quantity; });
          return;
       }
       if ( which == "max_once_transfer" ){
-         eosio_assert( acpt.min_once_transfer.amount < quantity.amount && quantity.amount < acpt.max_daily_transfer.amount , "max_once_transfer invalid");
+         eosio::check( acpt.min_once_transfer.amount < quantity.amount && quantity.amount < acpt.max_daily_transfer.amount , "max_once_transfer invalid");
          _accepts.modify( acpt, same_payer, [&]( auto& r ) { r.max_once_transfer = quantity; });
          return;
       }
       if ( which == "max_daily_transfer" ){
-         eosio_assert( quantity.amount > acpt.max_once_transfer.amount, "max_daily_transfer must be greater then max_once_transfer");
+         eosio::check( quantity.amount > acpt.max_once_transfer.amount, "max_daily_transfer must be greater then max_once_transfer");
          _accepts.modify( acpt, same_payer, [&]( auto& r ) { r.max_daily_transfer = quantity; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setacptstr( symbol_code symcode, string which, string value ) {
       const auto& acpt = get_currency_accept( symcode );
-      eosio_assert( value.size() < 256, "value string has more than 256 bytes");
+      eosio::check( value.size() < 256, "value string has more than 256 bytes");
 
       require_auth( acpt.administrator );
 
@@ -266,7 +266,7 @@ namespace eosio {
          _accepts.modify( acpt, acpt.administrator, [&]( auto& r ) { r.website = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setacptint( symbol_code symcode, string which, uint64_t value ) {
@@ -274,11 +274,11 @@ namespace eosio {
       check_admin_auth();
 
       if ( which == "max_tfs_per_minute" ){
-         eosio_assert( 1 <= value && value <= 500, "max_tfs_per_minute's value must in range [1,500]");
+         eosio::check( 1 <= value && value <= 500, "max_tfs_per_minute's value must in range [1,500]");
          _accepts.modify( acpt, _self, [&]( auto& r ) { r.max_tfs_per_minute = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setacptbool( symbol_code symcode, string which, bool value ) {
@@ -289,7 +289,7 @@ namespace eosio {
          _accepts.modify( acpt, acpt.administrator, [&]( auto& r ) { r.active = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setacptfee( symbol_code symcode,
@@ -300,24 +300,24 @@ namespace eosio {
       check_admin_auth();
 
       const auto& acpt = get_currency_accept( symcode );
-      eosio_assert( fee_mode == "fixed"_n || fee_mode == "ratio"_n, "mode can only be fixed or ratio");
-      eosio_assert( fee_fixed.symbol == acpt.accept.symbol && fee_fixed.amount >= 0, "service_fee_fixed invalid" );
-      eosio_assert( 0 <= fee_ratio && fee_ratio <= 0.05 , "service_fee_ratio invalid");
+      eosio::check( fee_mode == "fixed"_n || fee_mode == "ratio"_n, "mode can only be fixed or ratio");
+      eosio::check( fee_fixed.symbol == acpt.accept.symbol && fee_fixed.amount >= 0, "service_fee_fixed invalid" );
+      eosio::check( 0 <= fee_ratio && fee_ratio <= 0.05 , "service_fee_ratio invalid");
 
       if ( kind == "success"_n ){
-         eosio_assert( fee_fixed.amount * 5 <= acpt.min_once_transfer.amount, "service_fee_fixed.amount * 5 <= min_once_transfer.amount assert failed");
+         eosio::check( fee_fixed.amount * 5 <= acpt.min_once_transfer.amount, "service_fee_fixed.amount * 5 <= min_once_transfer.amount assert failed");
          _accepts.modify( acpt, _self, [&]( auto& r ) {
             r.service_fee_mode  = fee_mode;
             r.service_fee_fixed = fee_fixed;
             r.service_fee_ratio = fee_ratio;
          });
       } else if ( kind == "failed"_n ){
-         eosio_assert( fee_fixed.amount * 10 <= acpt.min_once_transfer.amount, "failed_fee.amount * 10 <= min_once_transfer.amount assert failed");
+         eosio::check( fee_fixed.amount * 10 <= acpt.min_once_transfer.amount, "failed_fee.amount * 10 <= min_once_transfer.amount assert failed");
          _accepts.modify( acpt, _self, [&]( auto& r ) {
             r.failed_fee = fee_fixed;
          });
       } else {
-         eosio_assert( false, "kind must be \"success\" or \"failed\"");
+         eosio::check( false, "kind must be \"success\" or \"failed\"");
       }
    }
    
@@ -332,14 +332,14 @@ namespace eosio {
                             asset       failed_fee,
                             bool        active ){
       check_admin_auth();
-      eosio_assert( is_account( administrator ), "administrator account does not exist");
+      eosio::check( is_account( administrator ), "administrator account does not exist");
 
-      eosio_assert( _accepts.find(max_supply.symbol.code().raw()) == _accepts.end(), "token symbol conflict in table 'stats' and 'accepts'");
+      eosio::check( _accepts.find(max_supply.symbol.code().raw()) == _accepts.end(), "token symbol conflict in table 'stats' and 'accepts'");
 
-      eosio_assert( max_supply.is_valid(), "invalid max_supply");
-      eosio_assert( max_supply.amount > 0, "max_supply must be positive");
+      eosio::check( max_supply.is_valid(), "invalid max_supply");
+      eosio::check( max_supply.amount > 0, "max_supply must be positive");
       auto symbol = max_supply.symbol;
-      eosio_assert( max_supply.symbol           == symbol &&
+      eosio::check( max_supply.symbol           == symbol &&
                     min_once_withdraw.symbol    == symbol &&
                     max_once_withdraw.symbol    == symbol &&
                     max_daily_withdraw.symbol   == symbol &&
@@ -349,14 +349,14 @@ namespace eosio {
                     max_daily_withdraw.amount   > max_once_withdraw.amount &&
                     failed_fee.amount           >= 0 , "invalid parameters");
 
-      eosio_assert( peerchain_name != name(), "peerchain_name can not be empty");
-      eosio_assert( _peerchains.find(peerchain_name.value) != _peerchains.end(), "peerchain has not registered");
-      eosio_assert( peerchain_contract != name(), "peerchain_contract can not be empty");
+      eosio::check( peerchain_name != name(), "peerchain_name can not be empty");
+      eosio::check( _peerchains.find(peerchain_name.value) != _peerchains.end(), "peerchain has not registered");
+      eosio::check( peerchain_contract != name(), "peerchain_contract can not be empty");
 
-      eosio_assert( failed_fee.amount * 10 <= min_once_withdraw.amount, "failed_fee.amount * 10 <= min_once_withdraw.amount assert failed");
+      eosio::check( failed_fee.amount * 10 <= min_once_withdraw.amount, "failed_fee.amount * 10 <= min_once_withdraw.amount assert failed");
 
       auto existing = _stats.find( max_supply.symbol.code().raw() );
-      eosio_assert( existing == _stats.end(), "token already exist" );
+      eosio::check( existing == _stats.end(), "token already exist" );
 
       _stats.emplace( _self, [&]( auto& r ){
          r.supply             = asset{ 0, max_supply.symbol };
@@ -381,31 +381,31 @@ namespace eosio {
 
    void token::setpegasset( symbol_code symcode, string which, asset quantity ) {
       const auto& st = get_currency_stats( symcode );
-      eosio_assert( quantity.symbol == st.supply.symbol, "invalid symbol" );
+      eosio::check( quantity.symbol == st.supply.symbol, "invalid symbol" );
       require_auth( st.administrator );
 
       if ( which == "max_supply" ){
-         eosio_assert( quantity.amount >= st.supply.amount, "max_supply.amount should not less then supply.amount");
+         eosio::check( quantity.amount >= st.supply.amount, "max_supply.amount should not less then supply.amount");
          _stats.modify( st, same_payer, [&]( auto& r ) { r.max_supply = quantity; });
          update_stats2( quantity.symbol.code() );
          return;
       }
       if ( which == "min_once_withdraw" ){
-         eosio_assert( 0 < quantity.amount && quantity.amount < st.max_once_withdraw.amount, "min_once_withdraw invalid");
+         eosio::check( 0 < quantity.amount && quantity.amount < st.max_once_withdraw.amount, "min_once_withdraw invalid");
          _stats.modify( st, same_payer, [&]( auto& r ) { r.min_once_withdraw = quantity; });
          return;
       }
       if ( which == "max_once_withdraw" ){
-         eosio_assert( st.min_once_withdraw.amount < quantity.amount && quantity.amount < st.max_daily_withdraw.amount , "max_once_withdraw invalid");
+         eosio::check( st.min_once_withdraw.amount < quantity.amount && quantity.amount < st.max_daily_withdraw.amount , "max_once_withdraw invalid");
          _stats.modify( st, same_payer, [&]( auto& r ) { r.max_once_withdraw = quantity; });
          return;
       }
       if ( which == "max_daily_withdraw" ){
-         eosio_assert( quantity.amount > st.max_once_withdraw.amount, "max_daily_withdraw.amount must be greater then max_once_withdraw.amount");
+         eosio::check( quantity.amount > st.max_once_withdraw.amount, "max_daily_withdraw.amount must be greater then max_once_withdraw.amount");
          _stats.modify( st, same_payer, [&]( auto& r ) { r.max_daily_withdraw = quantity; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setpegint( symbol_code symcode, string which, uint64_t value ) {
@@ -413,11 +413,11 @@ namespace eosio {
       check_admin_auth();
 
       if ( which == "max_wds_per_minute" ){
-         eosio_assert( 1 <= value && value <= 500, "max_wds_per_minute's value must in range [1,500]");
+         eosio::check( 1 <= value && value <= 500, "max_wds_per_minute's value must in range [1,500]");
          _stats.modify( st, _self, [&]( auto& r ) { r.max_wds_per_minute = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setpegbool( symbol_code symcode, string which, bool value ) {
@@ -428,7 +428,7 @@ namespace eosio {
          _stats.modify( st, same_payer, [&]( auto& r ) { r.active = value; });
          return;
       }
-      eosio_assert( false, "unkown config item" );
+      eosio::check( false, "unkown config item" );
    }
 
    void token::setpegtkfee( symbol_code symcode,
@@ -439,24 +439,24 @@ namespace eosio {
       check_admin_auth();
 
       const auto& st = get_currency_stats( symcode );
-      eosio_assert( fee_mode == "fixed"_n || fee_mode == "ratio"_n, "mode can only be fixed or ratio");
-      eosio_assert( fee_fixed.symbol == st.supply.symbol && fee_fixed.amount >= 0, "service_fee_fixed invalid" );
-      eosio_assert( 0 <= fee_ratio && fee_ratio <= 0.05 , "service_fee_ratio invalid");
+      eosio::check( fee_mode == "fixed"_n || fee_mode == "ratio"_n, "mode can only be fixed or ratio");
+      eosio::check( fee_fixed.symbol == st.supply.symbol && fee_fixed.amount >= 0, "service_fee_fixed invalid" );
+      eosio::check( 0 <= fee_ratio && fee_ratio <= 0.05 , "service_fee_ratio invalid");
 
       if ( kind == "success"_n ){
-         eosio_assert( fee_fixed.amount * 5 <= st.min_once_withdraw.amount, "service_fee_fixed.amount * 5 <= min_once_withdraw.amount assert failed");
+         eosio::check( fee_fixed.amount * 5 <= st.min_once_withdraw.amount, "service_fee_fixed.amount * 5 <= min_once_withdraw.amount assert failed");
          _stats.modify( st, same_payer, [&]( auto& r ) {
             r.service_fee_mode  = fee_mode;
             r.service_fee_fixed = fee_fixed;
             r.service_fee_ratio = fee_ratio;
          });
       } else if ( kind == "failed"_n ){
-         eosio_assert( fee_fixed.amount * 10 <= st.min_once_withdraw.amount, "failed_fee.amount * 10 <= min_once_withdraw.amount assert failed");
+         eosio::check( fee_fixed.amount * 10 <= st.min_once_withdraw.amount, "failed_fee.amount * 10 <= min_once_withdraw.amount assert failed");
          _stats.modify( st, same_payer, [&]( auto& r ) {
             r.failed_fee = fee_fixed;
          });
       } else {
-         eosio_assert( false, "kind must be \"success\" or \"failed\"");
+         eosio::check( false, "kind must be \"success\" or \"failed\"");
       }
    }
 
@@ -488,7 +488,7 @@ namespace eosio {
          return;
       }
 
-      eosio_assert(false, "parameter table must be empty string or accepts or stats");
+      eosio::check(false, "parameter table must be empty string or accepts or stats");
    }
 
    /**
@@ -499,22 +499,22 @@ namespace eosio {
      * when start with "local", means this is a local chain transaction, do not any process and return directly
      */
    void token::transfer_notify( name token_contract, name from, name to, asset quantity, string memo ) {
-      eosio_assert( to == _self, "to is not this contract");
+      eosio::check( to == _self, "to is not this contract");
 
       // Make sure that the action is the outermost action, so it need to compare all the parameters one by one
-      capi_checksum256 trx_id;
+      checksum256 trx_id;
       {
          std::vector<char> trx_bytes;
          size_t trx_size = transaction_size();
          trx_bytes.resize(trx_size);
          read_transaction(trx_bytes.data(), trx_size);
-         sha256( trx_bytes.data(), trx_size, &trx_id );
+         assert_sha256( trx_bytes.data(), trx_size, trx_id );
          auto trx = unpack<transaction>(trx_bytes.data(), trx_size);
-         eosio_assert( trx.actions.size() == 1, "Fatal: inline action not supported: transction contains more then one action");
+         eosio::check( trx.actions.size() == 1, "Fatal: inline action not supported: transction contains more then one action");
          auto first_action = trx.actions.front();
-         eosio_assert( first_action.name == "transfer"_n, "Fatal: inline action not supported: first_action.name != transfer");
+         eosio::check( first_action.name == "transfer"_n, "Fatal: inline action not supported: first_action.name != transfer");
          transfer_action_type args = unpack<transfer_action_type>( first_action.data );
-         eosio_assert(args.from == from && args.to == to &&
+         eosio::check(args.from == from && args.to == to &&
                       args.quantity == quantity && args.memo == memo, "Fatal: inline action not supported");
       }
 
@@ -526,30 +526,30 @@ namespace eosio {
       name real_from = from;
       if( from == _proxy_st.proxy ){
          name orig_from = name( get_value_str_by_key_str( memo, key_orig_from ));
-         eosio_assert( is_account(orig_from), "orig_from account not exist");
+         eosio::check( is_account(orig_from), "orig_from account not exist");
          real_from = orig_from;
       }
 
       // check global active
-      eosio_assert( _gstate.active, "global not active" );
+      eosio::check( _gstate.active, "global not active" );
 
       auto info = get_memo_info( memo );
-      eosio_assert( info.receiver != name(),"receiver not provide");
+      eosio::check( info.receiver != name(),"receiver not provide");
       auto pch = _peerchains.get( info.peerchain.value, "peerchain not registered");
 
       // check chain active
-      eosio_assert( pch.active, "peer chain is not active");
+      eosio::check( pch.active, "peer chain is not active");
 
       const auto& acpt = get_currency_accept( quantity.symbol.code() );
-      eosio_assert( acpt.active, "not active");
+      eosio::check( acpt.active, "not active");
 
-      eosio_assert( token_contract == acpt.original_contract, "original_contract does not match");
-      eosio_assert( quantity.symbol == acpt.accept.symbol, "symbol does not match");
-      eosio_assert( quantity.amount >= acpt.min_once_transfer.amount, "quantity less then min_once_transfer");
-      eosio_assert( quantity.amount <= acpt.max_once_transfer.amount, "quantity greater then max_once_transfer");
+      eosio::check( token_contract == acpt.original_contract, "original_contract does not match");
+      eosio::check( quantity.symbol == acpt.accept.symbol, "symbol does not match");
+      eosio::check( quantity.amount >= acpt.min_once_transfer.amount, "quantity less then min_once_transfer");
+      eosio::check( quantity.amount <= acpt.max_once_transfer.amount, "quantity greater then max_once_transfer");
 
       // accumulate max_tfs_per_minute and check
-      auto current_time_sec = now();
+      auto current_time_sec = (uint32_t)(eosio::current_time_point().sec_since_epoch());
       uint32_t limit = acpt.max_tfs_per_minute > 0 ? acpt.max_tfs_per_minute : default_max_trxs_per_minute_per_token;
       if ( current_time_sec > acpt.mutables.minute_trx_start + 60 ){
          _accepts.modify( acpt, same_payer, [&]( auto& r ) {
@@ -561,7 +561,7 @@ namespace eosio {
             r.mutables.minute_trxs += 1;
          });
       }
-      eosio_assert( acpt.mutables.minute_trxs <= limit,"max transactions per minute exceed" );
+      eosio::check( acpt.mutables.minute_trxs <= limit,"max transactions per minute exceed" );
 
       // accumulate max_daily_transfer and check
       if ( acpt.max_daily_transfer.amount != 0 ) {
@@ -575,7 +575,7 @@ namespace eosio {
                r.mutables.daily_tf_sum += quantity;
             });
          }
-         eosio_assert( acpt.mutables.daily_tf_sum <= acpt.max_daily_transfer,"max daily transfer exceed" );
+         eosio::check( acpt.mutables.daily_tf_sum <= acpt.max_daily_transfer,"max daily transfer exceed" );
       }
 
       // accumulate max_original_trxs_per_block and check
@@ -584,7 +584,7 @@ namespace eosio {
          _peerchainm.modify( pchm, same_payer, [&]( auto& r ) {
             r.current_block_trxs += 1;
          });
-         eosio_assert( pchm.current_block_trxs <= pch.max_original_trxs_per_block, "max_original_trxs_per_block exceed" );
+         eosio::check( pchm.current_block_trxs <= pch.max_original_trxs_per_block, "max_original_trxs_per_block exceed" );
       } else {
          _peerchainm.modify( pchm, same_payer, [&]( auto& r ) {
             r.current_block_time_slot = get_block_time_slot();
@@ -609,7 +609,7 @@ namespace eosio {
          r.total_transfer += quantity;
          r.total_transfer_times += 1;
       });
-      eosio_assert( acpt.accept.amount <= acpt.max_accept.amount, "acpt.accept.amount <= acpt.max_accept.amount assert failed");
+      eosio::check( acpt.accept.amount <= acpt.max_accept.amount, "acpt.accept.amount <= acpt.max_accept.amount assert failed");
 
       origtrxs_emplace( info.peerchain, transfer_action_info{ token_contract, real_from, quantity }, trx_id );
    }
@@ -643,11 +643,11 @@ namespace eosio {
                          asset   quantity,
                          string  memo )
    {
-      eosio_assert( is_account( to ), "to account does not exist");
-      eosio_assert( from != to, "cannot transfer to self" );
-      eosio_assert( memo.size() <= 512, "memo has more than 512 bytes" );
-      eosio_assert( quantity.is_valid(), "invalid quantity" );
-      eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
+      eosio::check( is_account( to ), "to account does not exist");
+      eosio::check( from != to, "cannot transfer to self" );
+      eosio::check( memo.size() <= 512, "memo has more than 512 bytes" );
+      eosio::check( quantity.is_valid(), "invalid quantity" );
+      eosio::check( quantity.amount > 0, "must transfer positive quantity" );
       auto sym = quantity.symbol.code();
 
       bool transfered = false;
@@ -655,23 +655,23 @@ namespace eosio {
 #ifndef HUB
       require_auth( from );
       const auto& st = _stats.get( sym.raw(), "symbol(token) not registered");
-      eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
+      eosio::check( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
 #else
       if ( ! _hubgs.is_open ){
          require_auth( from );
          const auto& st = _stats.get( sym.raw(), "symbol(token) not registered");
-         eosio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
+         eosio::check( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
       } else {
-         eosio_assert( _hubgs.hub_account != _self, "hub_account cannot be _self" );
+         eosio::check( _hubgs.hub_account != _self, "hub_account cannot be _self" );
          if ( from != _hubgs.hub_account ){
             require_auth( from );
          }else {
-            eosio_assert( to == _self, "the to account of hub transfer must be _self");
+            eosio::check( to == _self, "the to account of hub transfer must be _self");
             ibc_transfer_from_hub( to, quantity, memo );
 
             auto itr = _accepts.find(sym.raw());
             if( itr != _accepts.end() && _stats.find(sym.raw()) == _stats.end() ) {
-               eosio_assert( quantity.symbol == itr->accept.symbol, "symbol precision mismatch" );
+               eosio::check( quantity.symbol == itr->accept.symbol, "symbol precision mismatch" );
                transfered = true;
             }
          }
@@ -680,10 +680,10 @@ namespace eosio {
       /// --- ibc related logic ---
       if (  to == _self && memo.find("local") != 0 ) {   /// @tag 1: important 'to == _self' logic, avoid inline invoke action 'transfer_notify' or 'withdraw'
          auto info = get_memo_info( memo );
-         eosio_assert( info.receiver != name(), "receiver not provide");
+         eosio::check( info.receiver != name(), "receiver not provide");
 
          if ( info.peerchain == _gstate.this_chain ){ // The purpose of this logic is to unify the action call format
-            eosio_assert( _stats.find(sym.raw()) != _stats.end(), "token symbol not found in table stats");
+            eosio::check( _stats.find(sym.raw()) != _stats.end(), "token symbol not found in table stats");
             require_recipient( from );
             require_recipient( info.receiver );
 
@@ -694,7 +694,7 @@ namespace eosio {
          }
 
          auto pch = _peerchains.get( info.peerchain.value, "peerchain not registered");
-         eosio_assert( pch.active, "peer chain is not active");
+         eosio::check( pch.active, "peer chain is not active");
 
          auto itr = _stats.find(sym.raw());
          if ( itr != _stats.end() && info.peerchain == itr->peerchain_name ){
@@ -717,21 +717,21 @@ namespace eosio {
 
    void token::withdraw( name from, name peerchain_name, name peerchain_receiver, asset quantity, string memo ) {
       // check global state
-      eosio_assert( _gstate.active, "global not active" );
+      eosio::check( _gstate.active, "global not active" );
 
       const auto& st = get_currency_stats( quantity.symbol.code() );
-      eosio_assert( st.active, "not active");
-      eosio_assert( peerchain_name == st.peerchain_name, (string("peerchain_name must be ") + st.peerchain_name.to_string()).c_str());
+      eosio::check( st.active, "not active");
+      eosio::check( peerchain_name == st.peerchain_name, (string("peerchain_name must be ") + st.peerchain_name.to_string()).c_str());
 
-      eosio_assert( quantity.symbol == st.supply.symbol, "symbol does not match");
-      eosio_assert( quantity.amount >= st.min_once_withdraw.amount, "quantity less then min_once_transfer");
-      eosio_assert( quantity.amount <= st.max_once_withdraw.amount, "quantity greater then max_once_transfer");
+      eosio::check( quantity.symbol == st.supply.symbol, "symbol does not match");
+      eosio::check( quantity.amount >= st.min_once_withdraw.amount, "quantity less then min_once_transfer");
+      eosio::check( quantity.amount <= st.max_once_withdraw.amount, "quantity greater then max_once_transfer");
 
       const auto& balance = get_balance( _self, from, quantity.symbol.code() );
-      eosio_assert( quantity.amount <= balance.amount, "overdrawn balance1");
+      eosio::check( quantity.amount <= balance.amount, "overdrawn balance1");
 
       // accumulate max_wds_per_minute and check
-      auto current_time_sec = now();
+      auto current_time_sec = (uint32_t)(eosio::current_time_point().sec_since_epoch());
       auto limit = st.max_wds_per_minute > 0 ? st.max_wds_per_minute : default_max_trxs_per_minute_per_token;
 
       if ( current_time_sec > st.mutables.minute_trx_start + 60 ){
@@ -744,7 +744,7 @@ namespace eosio {
             r.mutables.minute_trxs += 1;
          });
       }
-      eosio_assert( st.mutables.minute_trxs <= limit, "max transactions per minute exceed" );
+      eosio::check( st.mutables.minute_trxs <= limit, "max transactions per minute exceed" );
 
       // accumulate max_daily_withdraw and check
       if ( st.max_daily_withdraw.amount != 0 ) {
@@ -758,7 +758,7 @@ namespace eosio {
                r.mutables.daily_wd_sum += quantity;
             });
          }
-         eosio_assert( st.mutables.daily_wd_sum <= st.max_daily_withdraw,"max daily withdraw exceed" );
+         eosio::check( st.mutables.daily_wd_sum <= st.max_daily_withdraw,"max daily withdraw exceed" );
       }
 
       // accumulate max_original_trxs_per_block and check
@@ -768,7 +768,7 @@ namespace eosio {
          _peerchainm.modify( pchm, same_payer, [&]( auto& r ) {
             r.current_block_trxs += 1;
          });
-         eosio_assert( pchm.current_block_trxs <= pch.max_original_trxs_per_block, "max_original_trxs_per_block exceed" );
+         eosio::check( pchm.current_block_trxs <= pch.max_original_trxs_per_block, "max_original_trxs_per_block exceed" );
       } else {
          _peerchainm.modify( pchm, same_payer, [&]( auto& r ) {
             r.current_block_time_slot = get_block_time_slot();
@@ -786,7 +786,7 @@ namespace eosio {
       name real_from = from;
       if( from == _proxy_st.proxy ){
          name orig_from = name( get_value_str_by_key_str( memo, key_orig_from ));
-         eosio_assert( is_account(orig_from), "orig_from account not exist");
+         eosio::check( is_account(orig_from), "orig_from account not exist");
          real_from = orig_from;
       }
 
@@ -796,15 +796,15 @@ namespace eosio {
    }
 
    void token::verify_merkle_path( const std::vector<digest_type>& merkle_path, digest_type check ) {
-      eosio_assert( merkle_path.size() > 0,"merkle_path can not be empty");
+      eosio::check( merkle_path.size() > 0,"merkle_path can not be empty");
 
       if ( merkle_path.size() == 1 ){
-         eosio_assert( is_equal_capi_checksum256(check, merkle_path[0]),"merkle path validate failed");
+         eosio::check( is_equal_checksum256(check, merkle_path[0]),"merkle path validate failed");
          return;
       }
 
-      eosio_assert( is_equal_capi_checksum256(check, merkle_path[0]) ||
-                    is_equal_capi_checksum256(check, merkle_path[1]), "digest not in merkle tree");
+      eosio::check( is_equal_checksum256(check, merkle_path[0]) ||
+                    is_equal_checksum256(check, merkle_path[1]), "digest not in merkle tree");
 
       digest_type result = get_checksum256( make_canonical_pair(merkle_path[0], merkle_path[1]) );
 
@@ -821,17 +821,17 @@ namespace eosio {
          }
          result = get_checksum256( std::make_pair(left,right) );
       }
-      eosio_assert( is_equal_capi_checksum256(result, merkle_path.back()) ,"merkle path validate failed" );
+      eosio::check( is_equal_checksum256(result, merkle_path.back()) ,"merkle path validate failed" );
    }
 
    void token::cash( const uint64_t&                        seq_num,
                      const name&                            from_chain,
                      const transaction_id_type&             orig_trx_id,         // redundant, facilitate indexing and checking
                      const std::vector<char>&               orig_trx_packed_trx_receipt,
-                     const std::vector<capi_checksum256>&   orig_trx_merkle_path,
+                     const std::vector<checksum256>&   orig_trx_merkle_path,
                      const uint32_t&                        orig_trx_block_num,  // redundant with orig_trx_block_header_data, facilitate indexing and checking
                      const std::vector<char>&               orig_trx_block_header_data,
-                     const std::vector<capi_checksum256>&   orig_trx_block_id_merkle_path,
+                     const std::vector<checksum256>&   orig_trx_block_id_merkle_path,
                      const uint32_t&                        anchor_block_num,
                      const name&                            to,                  // redundant, facilitate indexing and checking
                      const asset&                           quantity,            // with the token symbol of the original trx it self. redundant, facilitate indexing and checking
@@ -841,47 +841,47 @@ namespace eosio {
       chain::require_relay_auth( pch.thischain_ibc_chain_contract, relay );
 
       // check global state
-      eosio_assert( _gstate.active, "global not active" );
+      eosio::check( _gstate.active, "global not active" );
 
       auto sym = quantity.symbol;
-      eosio_assert( sym.is_valid(), "invalid symbol name" );
-      eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
+      eosio::check( sym.is_valid(), "invalid symbol name" );
+      eosio::check( memo.size() <= 256, "memo has more than 256 bytes" );
 
-      eosio_assert( seq_num == get_cashtrxs_tb_max_seq_num(from_chain) + 1, "seq_num not valid");   // seq_num is important, used to enable all successful cash transactions must be successfully returned to the original chain, no one will be lost
-      eosio_assert( orig_trx_block_num >= get_cashtrxs_tb_max_orig_trx_block_num(from_chain), "orig_trx_block_num error");  // important! used to prevent replay attack
-      eosio_assert( false == is_orig_trx_id_exist_in_cashtrxs_tb(from_chain, orig_trx_id), "orig_trx_id already exist");      // important! used to prevent replay attack
+      eosio::check( seq_num == get_cashtrxs_tb_max_seq_num(from_chain) + 1, "seq_num not valid");   // seq_num is important, used to enable all successful cash transactions must be successfully returned to the original chain, no one will be lost
+      eosio::check( orig_trx_block_num >= get_cashtrxs_tb_max_orig_trx_block_num(from_chain), "orig_trx_block_num error");  // important! used to prevent replay attack
+      eosio::check( false == is_orig_trx_id_exist_in_cashtrxs_tb(from_chain, orig_trx_id), "orig_trx_id already exist");      // important! used to prevent replay attack
 
       const transaction_receipt& trx_receipt = unpack<transaction_receipt>( orig_trx_packed_trx_receipt );
-      eosio_assert( trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
+      eosio::check( trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
       packed_transaction pkd_trx = std::get<packed_transaction>(trx_receipt.trx);
       transaction trxn = unpack<transaction>( pkd_trx.packed_trx );
-      eosio_assert( trxn.actions.size() == 1, "transfer transaction contains more then one action" );
+      eosio::check( trxn.actions.size() == 1, "transfer transaction contains more then one action" );
 
       // validate transaction id
-      eosio_assert( std::memcmp(orig_trx_id.hash, pkd_trx.id().hash, 32) == 0, "transaction id mismatch");
+      eosio::check( orig_trx_id == pkd_trx.id(), "transaction id mismatch");
 
       // check transfer action
       action actn = trxn.actions.front();
       transfer_action_type args = unpack<transfer_action_type>( actn.data );
 
       // check action parameters
-      eosio_assert( args.to == pch.peerchain_ibc_token_contract, "transfer to account not correct" );
-      eosio_assert( args.quantity == quantity, "quantity not equal to quantity within packed transaction" );
+      eosio::check( args.to == pch.peerchain_ibc_token_contract, "transfer to account not correct" );
+      eosio::check( args.quantity == quantity, "quantity not equal to quantity within packed transaction" );
       memo_info_type memo_info = get_memo_info( args.memo );
 
-      eosio_assert( to == memo_info.receiver, "to not equal to receiver，which provided in memo string" );
-      eosio_assert( is_account( to ), "to account does not exist");
-      eosio_assert( memo_info.peerchain == _gstate.this_chain, "peer chain name in orignal trx must be this chain's name");
+      eosio::check( to == memo_info.receiver, "to not equal to receiver，which provided in memo string" );
+      eosio::check( is_account( to ), "to account does not exist");
+      eosio::check( memo_info.peerchain == _gstate.this_chain, "peer chain name in orignal trx must be this chain's name");
 
       // validate merkle path
       verify_merkle_path( orig_trx_merkle_path, trx_receipt.digest() );
 
       // --- validate with lwc ---
-      eosio_assert( orig_trx_block_num <= anchor_block_num, "orig_trx_block_num <= anchor_block_num assert failed");
+      eosio::check( orig_trx_block_num <= anchor_block_num, "orig_trx_block_num <= anchor_block_num assert failed");
       if ( orig_trx_block_num < anchor_block_num ){
          block_header orig_trx_block_header = unpack<block_header>( orig_trx_block_header_data );
-         eosio_assert( orig_trx_block_header.block_num() == orig_trx_block_num, "orig_trx_block_header.block_num() must equal to orig_trx_block_num");
-         eosio_assert( std::memcmp(orig_trx_merkle_path.back().hash, orig_trx_block_header.transaction_mroot.hash, 32) == 0, "transaction_mroot check failed");
+         eosio::check( orig_trx_block_header.block_num() == orig_trx_block_num, "orig_trx_block_header.block_num() must equal to orig_trx_block_num");
+         eosio::check( orig_trx_merkle_path.back() == orig_trx_block_header.transaction_mroot, "transaction_mroot check failed");
          verify_merkle_path( orig_trx_block_id_merkle_path, orig_trx_block_header.id() );
          uint32_t layer = orig_trx_block_id_merkle_path.size() == 1 ? 1 : orig_trx_block_id_merkle_path.size() - 1;
          chain::assert_anchor_block_and_merkle_node( pch.thischain_ibc_chain_contract, anchor_block_num, layer, orig_trx_block_id_merkle_path.back() );
@@ -922,15 +922,15 @@ namespace eosio {
       
       if ( ibc_transfer ){   // issue peg token to user
          const auto& st = get_currency_stats( sym.code() );
-         eosio_assert( st.active, "not active");
-         eosio_assert( st.peerchain_name == from_chain, "from_chain must equal to st.peerchain_name");
-         eosio_assert( actn.account == st.peerchain_contract || actn.account == pch.peerchain_ibc_token_contract || actn.account == peerchain_proxy_account,
+         eosio::check( st.active, "not active");
+         eosio::check( st.peerchain_name == from_chain, "from_chain must equal to st.peerchain_name");
+         eosio::check( actn.account == st.peerchain_contract || actn.account == pch.peerchain_ibc_token_contract || actn.account == peerchain_proxy_account,
                "action.account not equal to st.peerchain_contract or pch.peerchain_ibc_token_contract or peerchain_proxy_account.");
 
-         eosio_assert( quantity.is_valid(), "invalid quantity" );
-         eosio_assert( quantity.amount > 0, "must issue positive quantity" );
-         eosio_assert( quantity.symbol.precision() == st.supply.symbol.precision(), "symbol precision mismatch" );
-         eosio_assert( quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
+         eosio::check( quantity.is_valid(), "invalid quantity" );
+         eosio::check( quantity.amount > 0, "must issue positive quantity" );
+         eosio::check( quantity.symbol.precision() == st.supply.symbol.precision(), "symbol precision mismatch" );
+         eosio::check( quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
          new_quantity = asset( quantity.amount, st.supply.symbol );
 
@@ -951,7 +951,7 @@ namespace eosio {
             }
          }
 
-         eosio_assert( diff >= 0, "internal error, service_fee_ratio config error.");
+         eosio::check( diff >= 0, "internal error, service_fee_ratio config error.");
 
          auto final_quantity = asset( 0, st.supply.symbol );
          auto fee_quantity = asset( 0, st.supply.symbol );
@@ -973,20 +973,20 @@ namespace eosio {
          update_stats2( st.supply.symbol.code() );
       } else {  // withdraw accepted token to user
          const auto& acpt = get_currency_accept( quantity.symbol.code() );
-         eosio_assert( acpt.active, "not active");
-         eosio_assert( actn.account == pch.peerchain_ibc_token_contract || actn.account == peerchain_proxy_account, "action.account not equal to pch.peerchain_ibc_token_contract or peerchain_proxy_account.");
+         eosio::check( acpt.active, "not active");
+         eosio::check( actn.account == pch.peerchain_ibc_token_contract || actn.account == peerchain_proxy_account, "action.account not equal to pch.peerchain_ibc_token_contract or peerchain_proxy_account.");
 
-         eosio_assert( quantity.is_valid(), "invalid quantity" );
-         eosio_assert( quantity.amount > 0, "must issue positive quantity" );
-         eosio_assert( quantity.symbol.precision() == acpt.accept.symbol.precision(), "symbol precision mismatch" );
-         eosio_assert( quantity.amount <= acpt.accept.amount, "quantity exceeds available accept");
+         eosio::check( quantity.is_valid(), "invalid quantity" );
+         eosio::check( quantity.amount > 0, "must issue positive quantity" );
+         eosio::check( quantity.symbol.precision() == acpt.accept.symbol.precision(), "symbol precision mismatch" );
+         eosio::check( quantity.amount <= acpt.accept.amount, "quantity exceeds available accept");
 
          new_quantity = asset( quantity.amount, acpt.accept.symbol );
 
          auto _chainassets = chainassets_table( _self, from_chain.value );
          auto itr = _chainassets.find( acpt.accept.symbol.code().raw() );
-         eosio_assert( itr != _chainassets.end(), "chain assets not found");
-         eosio_assert( itr->balance.amount >= new_quantity.amount, "have no enough chain asset to withdraw");
+         eosio::check( itr != _chainassets.end(), "chain assets not found");
+         eosio::check( itr->balance.amount >= new_quantity.amount, "have no enough chain asset to withdraw");
 
          _chainassets.modify( itr, same_payer, [&]( auto& chain ) { // calculate before charging fee
             chain.balance -= new_quantity;
@@ -1007,7 +1007,7 @@ namespace eosio {
             }
          }
 
-         eosio_assert( diff >= 0, "internal error, service_fee_ratio config error");
+         eosio::check( diff >= 0, "internal error, service_fee_ratio config error");
 
          auto final_quantity = asset( 0, acpt.accept.symbol  );
          auto fee_quantity = asset( 0, acpt.accept.symbol );
@@ -1057,51 +1057,51 @@ namespace eosio {
    void token::cashconfirm( const name&                            from_chain,
                             const transaction_id_type&             cash_trx_id,
                             const std::vector<char>&               cash_trx_packed_trx_receipt,
-                            const std::vector<capi_checksum256>&   cash_trx_merkle_path,
+                            const std::vector<checksum256>&   cash_trx_merkle_path,
                             const uint32_t&                        cash_trx_block_num,  // redundant with cash_trx_block_header_data, facilitate indexing and checking
                             const std::vector<char>&               cash_trx_block_header_data,
-                            const std::vector<capi_checksum256>&   cash_trx_block_id_merkle_path,
+                            const std::vector<checksum256>&   cash_trx_block_id_merkle_path,
                             const uint32_t&                        anchor_block_num,
                             const transaction_id_type&             orig_trx_id ) {
 
       auto orig_action_info = get_orignal_action_by_trx_id( from_chain, orig_trx_id );
 
       const transaction_receipt& trx_receipt = unpack<transaction_receipt>( cash_trx_packed_trx_receipt );
-      eosio_assert( trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
+      eosio::check( trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
       packed_transaction pkd_trx = std::get<packed_transaction>(trx_receipt.trx);
       transaction trx = unpack<transaction>( pkd_trx.packed_trx );
-      eosio_assert( trx.actions.size() == 1, "cash transaction contains more then one action" );
+      eosio::check( trx.actions.size() == 1, "cash transaction contains more then one action" );
 
       auto pch = _peerchains.get( from_chain.value, "from_chain not registered");
-      eosio_assert( trx.actions.front().account == pch.peerchain_ibc_token_contract, "trx.actions.front().account == pch.peerchain_ibc_token_contract assert failed");
+      eosio::check( trx.actions.front().account == pch.peerchain_ibc_token_contract, "trx.actions.front().account == pch.peerchain_ibc_token_contract assert failed");
 
       // validate cash transaction id
-      eosio_assert( std::memcmp(cash_trx_id.hash, pkd_trx.id().hash, 32) == 0, "cash_trx_id mismatch");
+      eosio::check( cash_trx_id == pkd_trx.id(), "cash_trx_id mismatch");
 
       // check issue action
       cash_action_type args = unpack<cash_action_type>( trx.actions.front().data );
       transaction_receipt src_tf_trx_receipt = unpack<transaction_receipt>( args.orig_trx_packed_trx_receipt );
-      eosio_assert( src_tf_trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
+      eosio::check( src_tf_trx_receipt.status == transaction_receipt::executed, "trx_receipt.status must be executed");
       packed_transaction src_pkd_trx = std::get<packed_transaction>(src_tf_trx_receipt.trx);
       transaction src_trx = unpack<transaction>( src_pkd_trx.packed_trx );
-      eosio_assert( src_trx.actions.size() == 1, "orignal transaction contains more then one action" );
-      eosio_assert( std::memcmp(orig_trx_id.hash, src_pkd_trx.id().hash, 32) == 0, "orig_trx_id mismatch" );
+      eosio::check( src_trx.actions.size() == 1, "orignal transaction contains more then one action" );
+      eosio::check( orig_trx_id == src_pkd_trx.id(), "orig_trx_id mismatch" );
 
       transfer_action_type src_trx_args = unpack<transfer_action_type>( src_trx.actions.front().data );
 
       // check cash_seq_num
       auto& pchm = _peerchainm.get( from_chain.value, "from_chain not registered");
-      eosio_assert( args.seq_num == pchm.cash_seq_num + 1, "seq_num derived from cash_trx_packed_trx_receipt error");
+      eosio::check( args.seq_num == pchm.cash_seq_num + 1, "seq_num derived from cash_trx_packed_trx_receipt error");
 
       // validate merkle path
       verify_merkle_path( cash_trx_merkle_path, trx_receipt.digest());
 
       // --- validate with lwc ---
-      eosio_assert( cash_trx_block_num <= anchor_block_num, "cash_trx_block_num <= anchor_block_num assert failed");
+      eosio::check( cash_trx_block_num <= anchor_block_num, "cash_trx_block_num <= anchor_block_num assert failed");
       if ( cash_trx_block_num < anchor_block_num ){
          block_header cash_trx_block_header = unpack<block_header>( cash_trx_block_header_data );
-         eosio_assert( cash_trx_block_header.block_num() == cash_trx_block_num, "cash_trx_block_header.block_num() must equal to cash_trx_block_num");
-         eosio_assert( std::memcmp(cash_trx_merkle_path.back().hash, cash_trx_block_header.transaction_mroot.hash, 32) == 0, "transaction_mroot check failed");
+         eosio::check( cash_trx_block_header.block_num() == cash_trx_block_num, "cash_trx_block_header.block_num() must equal to cash_trx_block_num");
+         eosio::check( cash_trx_merkle_path.back() == cash_trx_block_header.transaction_mroot, "transaction_mroot check failed");
          verify_merkle_path( cash_trx_block_id_merkle_path, cash_trx_block_header.id() );
          uint32_t layer = cash_trx_block_id_merkle_path.size() == 1 ? 1 : cash_trx_block_id_merkle_path.size() - 1;
          chain::assert_anchor_block_and_merkle_node( pch.thischain_ibc_chain_contract, anchor_block_num, layer, cash_trx_block_id_merkle_path.back() );
@@ -1128,7 +1128,7 @@ namespace eosio {
       if ( itr == _stats.end()){
          auto acpt = _accepts.get( sym_code_raw );
          auto account = src_trx.actions.front().account;
-         eosio_assert( account == _self || account == acpt.original_contract || account == _proxy_st.proxy , "account should be _self or acpt.original_contract or _proxy_st.proxy");
+         eosio::check( account == _self || account == acpt.original_contract || account == _proxy_st.proxy , "account should be _self or acpt.original_contract or _proxy_st.proxy");
       }
 
       if ( ibc_withdraw ){
@@ -1155,13 +1155,13 @@ namespace eosio {
 
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
       auto idx = _origtrxs.get_index<"trxid"_n>();
-      auto it = idx.find( fixed_bytes<32>(trx_id.hash) );
-      eosio_assert( it != idx.end(), "trx_id not exist");
+      auto it = idx.find( fixed_bytes<32>(trx_id) );
+      eosio::check( it != idx.end(), "trx_id not exist");
 
-      eosio_assert( it->block_time_slot + 25 < _peerchainm.get(peerchain_name.value).last_confirmed_orig_trx_block_time_slot, "(block_time_slot + 25 < last_confirmed_orig_trx_block_time_slot) is false");
+      eosio::check( it->block_time_slot + 25 < _peerchainm.get(peerchain_name.value).last_confirmed_orig_trx_block_time_slot, "(block_time_slot + 25 < last_confirmed_orig_trx_block_time_slot) is false");
 
       transfer_action_info action_info = it->action;
-      string memo = "rollback transaction: " + capi_checksum256_to_string(trx_id);
+      string memo = "rollback transaction: " + checksum256_to_string(trx_id);
       print( memo.c_str() );
 
       asset final_quantity(0,action_info.quantity.symbol);
@@ -1186,7 +1186,7 @@ namespace eosio {
             asset fee = acpt.failed_fee;
             if ( action_info.from == pch.thischain_free_account )
                fee.amount = 0;
-            eosio_assert( fee.amount >= 0, "internal error, service_fee_ratio config error");
+            eosio::check( fee.amount >= 0, "internal error, service_fee_ratio config error");
 
             final_quantity = asset( action_info.quantity.amount > fee.amount ?  action_info.quantity.amount - fee.amount : 1, action_info.quantity.symbol ); // 1 is used to avoid rollback failure
             transfer_action_type action_data{ _self, action_info.from, final_quantity, memo };
@@ -1206,7 +1206,7 @@ namespace eosio {
             asset fee = st.failed_fee;
             if ( action_info.from == pch.thischain_free_account )
                fee.amount = 0;
-            eosio_assert( fee.amount >= 0, "internal error, service_fee_ratio config error");
+            eosio::check( fee.amount >= 0, "internal error, service_fee_ratio config error");
 
             final_quantity = asset( action_info.quantity.amount > fee.amount ?  action_info.quantity.amount - fee.amount : 1, action_info.quantity.symbol ); // 1 is used to avoid rollback failure
             transfer_action_type action_data{ _self, action_info.from, final_quantity, memo };
@@ -1232,11 +1232,11 @@ namespace eosio {
 
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
       auto idx = _origtrxs.get_index<"trxid"_n>();
-      auto it = idx.find( fixed_bytes<32>(trx_id.hash) );
-      eosio_assert( it != idx.end(), "trx_id not exist");
+      auto it = idx.find( fixed_bytes<32>(trx_id) );
+      eosio::check( it != idx.end(), "trx_id not exist");
 
       auto pchm = _peerchainm.get( peerchain_name.value, "peerchain not found");
-      eosio_assert( it->block_time_slot + min_distance < pchm.last_confirmed_orig_trx_block_time_slot, "(block_time_slot + min_distance < _gmutable.last_confirmed_orig_trx_block_time_slot) is false");
+      eosio::check( it->block_time_slot + min_distance < pchm.last_confirmed_orig_trx_block_time_slot, "(block_time_slot + min_distance < _gmutable.last_confirmed_orig_trx_block_time_slot) is false");
 
       _origtrxs.erase( _origtrxs.find(it->id) );
 
@@ -1252,12 +1252,12 @@ namespace eosio {
    // this action maybe needed when repairing the ibc system manually
    void token::fcrollback( name peerchain_name, const std::vector<transaction_id_type> trxs ) {
       check_admin_auth();
-      eosio_assert( trxs.size() != 0, "no transacton" );
+      eosio::check( trxs.size() != 0, "no transacton" );
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
 
       for ( const auto& trx_id : trxs ){
          auto idx = _origtrxs.get_index<"trxid"_n>();
-         const auto& record = idx.get( fixed_bytes<32>(trx_id.hash), "trx_id not found");
+         const auto& record = idx.get( fixed_bytes<32>(trx_id), "trx_id not found");
          transfer_action_info action_info = record.action;
 
          bool ibc_withdraw = false;
@@ -1276,7 +1276,7 @@ namespace eosio {
             });
 
             if( action_info.from != _self ) {
-               string memo = "rollback transaction: " + capi_checksum256_to_string(trx_id);
+               string memo = "rollback transaction: " + checksum256_to_string(trx_id);
                transfer_action_type action_data{ _self, action_info.from, action_info.quantity, memo };
                action( permission_level{ _self, "active"_n }, acpt.original_contract, "transfer"_n, action_data ).send();
             }
@@ -1290,7 +1290,7 @@ namespace eosio {
             });
 
             if( action_info.from != _self ) {
-               string memo = "rollback transaction: " + capi_checksum256_to_string(trx_id);
+               string memo = "rollback transaction: " + checksum256_to_string(trx_id);
                transfer_action_type action_data{ _self, action_info.from, action_info.quantity, memo };
                action( permission_level{ _self, "active"_n }, _self, "transfer"_n, action_data ).send();
             }
@@ -1303,25 +1303,25 @@ namespace eosio {
 
    void token::fcrmorigtrx( name peerchain_name, const std::vector<transaction_id_type> trxs ){
       check_admin_auth();
-      eosio_assert( trxs.size() != 0, "no transacton" );
+      eosio::check( trxs.size() != 0, "no transacton" );
 
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
       for ( const auto& trx_id : trxs ){
          auto idx = _origtrxs.get_index<"trxid"_n>();
-         const auto& record = idx.get( fixed_bytes<32>(trx_id.hash), "trx_id not found");
+         const auto& record = idx.get( fixed_bytes<32>(trx_id), "trx_id not found");
          _origtrxs.erase( record );
       }
    }
 
    void token::lockall() {
       check_admin_auth();
-      eosio_assert( _gstate.active == true, "_gstate.active == false, nothing to do");
+      eosio::check( _gstate.active == true, "_gstate.active == false, nothing to do");
       _gstate.active = false;
    }
 
    void token::unlockall() {
       check_admin_auth();
-      eosio_assert( _gstate.active == false,  "_gstate.active == true, nothing to do");
+      eosio::check( _gstate.active == false,  "_gstate.active == true, nothing to do");
       _gstate.active = true;
    }
 
@@ -1329,7 +1329,7 @@ namespace eosio {
       accounts from_acnts( _self, owner.value );
 
       const auto& from = from_acnts.get( value.symbol.code().raw(), "no balance object found" );
-      eosio_assert( from.balance.amount >= value.amount, "overdrawn balance2" );
+      eosio::check( from.balance.amount >= value.amount, "overdrawn balance2" );
       auto payer = owner;
       #ifdef HUB
       if ( _hubgs.is_open && payer == _hubgs.hub_account ){ payer = _self; }
@@ -1377,8 +1377,8 @@ namespace eosio {
       require_auth( owner );
       accounts acnts( _self, owner.value );
       auto it = acnts.find( symcode.raw() );
-      eosio_assert( it != acnts.end(), "Balance row already deleted or never existed. Action won't have any effect." );
-      eosio_assert( it->balance.amount == 0, "Cannot close because the balance is not zero." );
+      eosio::check( it != acnts.end(), "Balance row already deleted or never existed. Action won't have any effect." );
+      eosio::check( it->balance.amount == 0, "Cannot close because the balance is not zero." );
       acnts.erase( it );
    }
 
@@ -1405,7 +1405,7 @@ namespace eosio {
       auto _cashtrxs = cashtrxs_table( _self, peerchain_name.value );
       auto _rmdunrbs = rmdunrbs_table( _self, peerchain_name.value );
 
-      eosio_assert( _origtrxs.begin() != _origtrxs.end() ||
+      eosio::check( _origtrxs.begin() != _origtrxs.end() ||
                     _cashtrxs.begin() != _cashtrxs.end() ||
                     _rmdunrbs.begin() != _rmdunrbs.end(), "already empty");
 
@@ -1470,16 +1470,16 @@ namespace eosio {
    transfer_action_info token::get_orignal_action_by_trx_id( name peerchain_name, transaction_id_type trx_id ) {
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
       auto idx = _origtrxs.get_index<"trxid"_n>();
-      auto itr = idx.find( fixed_bytes<32>(trx_id.hash) );
-      eosio_assert( itr != idx.end(), "orig_trx_id not exist");
+      auto itr = idx.find( fixed_bytes<32>(trx_id) );
+      eosio::check( itr != idx.end(), "orig_trx_id not exist");
       return itr->action;
    }
 
    void token::erase_record_in_origtrxs_tb_by_trx_id_for_confirmed( name peerchain_name, transaction_id_type  trx_id ){
       auto _origtrxs = origtrxs_table( _self, peerchain_name.value );
       auto idx = _origtrxs.get_index<"trxid"_n>();
-      auto it = idx.find( fixed_bytes<32>(trx_id.hash) );
-      eosio_assert( it != idx.end(), "trx_id not exit in origtrxs table");
+      auto it = idx.find( fixed_bytes<32>(trx_id) );
+      eosio::check( it != idx.end(), "trx_id not exit in origtrxs table");
 
       auto& pchm = _peerchainm.get( peerchain_name.value );
       _peerchainm.modify( pchm, same_payer, [&]( auto& r ) {
@@ -1546,7 +1546,7 @@ namespace eosio {
    bool token::is_orig_trx_id_exist_in_cashtrxs_tb( name peerchain_name, transaction_id_type orig_trx_id ) {
       auto _cashtrxs = cashtrxs_table( _self, peerchain_name.value );
       auto idx = _cashtrxs.get_index<"trxid"_n>();
-      auto it = idx.find( fixed_bytes<32>(orig_trx_id.hash) );
+      auto it = idx.find( fixed_bytes<32>(orig_trx_id) );
       if ( it == idx.end() ) {
          return false;
       }
@@ -1589,21 +1589,21 @@ namespace eosio {
       /// parse memo string
       string tmp_memo = memo;
       trim( tmp_memo );
-      eosio_assert( tmp_memo.find(">>") == 0, error_info.c_str() );
+      eosio::check( tmp_memo.find(">>") == 0, error_info.c_str() );
       tmp_memo = tmp_memo.substr(2);
       trim( tmp_memo );
       auto memo_info = get_memo_info( tmp_memo );
 
       /// assert ...
-      eosio_assert(memo_info.receiver != name(),"receiver not provide");
-      eosio_assert(memo_info.peerchain != from_chain, "can not hub transfer to it's original chain");
-      eosio_assert(memo_info.peerchain != _gstate.this_chain, "can not hub transfer to the hub-chain itself");
+      eosio::check(memo_info.receiver != name(),"receiver not provide");
+      eosio::check(memo_info.peerchain != from_chain, "can not hub transfer to it's original chain");
+      eosio::check(memo_info.peerchain != _gstate.this_chain, "can not hub transfer to the hub-chain itself");
       auto pch = _peerchains.get( memo_info.peerchain.value, "dest chain has not registered");
-      eosio_assert(pch.active, "dest chain is not active");
+      eosio::check(pch.active, "dest chain is not active");
 
       /// --- get mini_to_quantity ---
       const auto& acpt = get_currency_accept( quantity.symbol.code() );
-      eosio_assert( acpt.active, "not active");
+      eosio::check( acpt.active, "not active");
 
       int64_t diff = 0;
       if ( ! from_free_account ){
@@ -1614,14 +1614,14 @@ namespace eosio {
          }
       }
 
-      eosio_assert( diff >= 0 && diff < quantity.amount, "diff >= 0 && diff < quantity.amount assert failed");
+      eosio::check( diff >= 0 && diff < quantity.amount, "diff >= 0 && diff < quantity.amount assert failed");
       asset mini_to_quantity{quantity.amount - diff, quantity.symbol};
 
-      eosio_assert( mini_to_quantity >= acpt.min_once_transfer, "mini_to_quantity >= acpt.min_once_transfer assert failed" );
+      eosio::check( mini_to_quantity >= acpt.min_once_transfer, "mini_to_quantity >= acpt.min_once_transfer assert failed" );
 
       auto ptr = _stats.find(quantity.symbol.code().raw());
       if ( ptr != _stats.end() ){
-         eosio_assert( mini_to_quantity >= ptr->min_once_withdraw, "mini_to_quantity >= ptr->min_once_withdraw assert failed" );
+         eosio::check( mini_to_quantity >= ptr->min_once_withdraw, "mini_to_quantity >= ptr->min_once_withdraw assert failed" );
       }
 
       /// record to hub table
@@ -1641,14 +1641,14 @@ namespace eosio {
          r.orig_pure_memo     = memo_info.notes;
          r.to_quantity        = asset{0,quantity.symbol};
          r.fee_receiver       = name();
-         r.hub_trx_id         = capi_checksum256();
+         r.hub_trx_id         = checksum256();
          r.hub_trx_time_slot  = 0;
          r.forward_times      = 0;
          r.backward_times     = 0;
       });
 
       /// check max unfinished hub trxs
-      eosio_assert(_hubgs.unfinished_trxs < max_hub_unfinished_trxs, "to much unfinished hub trxs");
+      eosio::check(_hubgs.unfinished_trxs < max_hub_unfinished_trxs, "to much unfinished hub trxs");
       _hubgs.unfinished_trxs += 1;
    }
 
@@ -1657,7 +1657,7 @@ namespace eosio {
 
    void token::ibc_transfer_from_hub( const name& to, const asset& quantity, const string& memo  ){
       /// --- check to ---
-      eosio_assert( to == _self, "the to account of hub transfer must be _self");
+      eosio::check( to == _self, "the to account of hub transfer must be _self");
 
       /// --- check memo string ---
       /// 1. parse memo string
@@ -1666,42 +1666,42 @@ namespace eosio {
 
       /// 2. get orig_trx_id
       string value_str = get_value_str_by_key_str( memo, "orig_trx_id");
-      eosio_assert( value_str.size() != 0, error_info2.c_str());
-      eosio_assert( value_str.size() == 64, "orig_trx_id value not valid");
-      capi_checksum256 orig_trx_id = string_to_capi_checksum256( value_str );
+      eosio::check( value_str.size() != 0, error_info2.c_str());
+      eosio::check( value_str.size() == 64, "orig_trx_id value not valid");
+      checksum256 orig_trx_id = string_to_checksum256( value_str );
 
       /// 3. get hubtrxs table recored
       auto _hubtrxs = hubtrxs_table( _self, _self.value );
       auto idx = _hubtrxs.get_index<"origtrxid"_n>();
       const auto& hub_trx_p = idx.find(fixed_bytes<32>(orig_trx_id.hash));
-      eosio_assert( hub_trx_p != idx.end(), "original transaction not found with the specified id");
+      eosio::check( hub_trx_p != idx.end(), "original transaction not found with the specified id");
 
       /// 4. check ...
-      eosio_assert( std::memcmp(hub_trx_p->hub_trx_id.hash, capi_checksum256().hash, 32) == 0 &&
+      eosio::check( std::memcmp(hub_trx_p->hub_trx_id.hash, checksum256().hash, 32) == 0 &&
                     hub_trx_p->hub_trx_time_slot == 0, "hub trx can not double spend!");
 
       if ( memo_info.peerchain == hub_trx_p->to_chain ) {
-         eosio_assert( memo_info.receiver == hub_trx_p->to_account, "hub trx must transfer to it's dest account");
+         eosio::check( memo_info.receiver == hub_trx_p->to_account, "hub trx must transfer to it's dest account");
          _hubtrxs.modify( *hub_trx_p, same_payer, [&]( auto& r ) { r.forward_times += 1; });
       } else if ( memo_info.peerchain == hub_trx_p->from_chain ) {
-         eosio_assert( memo_info.receiver == hub_trx_p->from_account, "hub trx must transfer to it's original account");
+         eosio::check( memo_info.receiver == hub_trx_p->from_account, "hub trx must transfer to it's original account");
          auto slot = get_block_time_slot();
-         eosio_assert( slot - hub_trx_p->cash_time_slot > 240, "you can't transfer hub trx back to it's original chain within two minutes");
+         eosio::check( slot - hub_trx_p->cash_time_slot > 240, "you can't transfer hub trx back to it's original chain within two minutes");
          _hubtrxs.modify( *hub_trx_p, same_payer, [&]( auto& r ) { r.backward_times += 1; });
       } else {
-         eosio_assert(false, "hub trx must transfer to it's dest chain or original chain");
+         eosio::check(false, "hub trx must transfer to it's dest chain or original chain");
       }
 
       /// --- check quantity ---
-      eosio_assert(quantity.symbol == hub_trx_p->from_quantity.symbol, "quantity.symbol == hub_trx_p->from_quantity.symbol assert failed");
-      eosio_assert(hub_trx_p->from_quantity >= quantity && quantity >= hub_trx_p->mini_to_quantity, "quantity must in range [from_quantity,mini_to_quantity]");
+      eosio::check(quantity.symbol == hub_trx_p->from_quantity.symbol, "quantity.symbol == hub_trx_p->from_quantity.symbol assert failed");
+      eosio::check(hub_trx_p->from_quantity >= quantity && quantity >= hub_trx_p->mini_to_quantity, "quantity must in range [from_quantity,mini_to_quantity]");
 
       /// transfer fee to receiver
       string worker = get_value_str_by_key_str( memo, "worker");
       name receiver = name();
       if ( worker.size() ){
          receiver = name(worker);
-         eosio_assert(is_account(receiver), "worker account does not exist");
+         eosio::check(is_account(receiver), "worker account does not exist");
       }
 
       /// recored to hubtrxs table
@@ -1729,7 +1729,7 @@ namespace eosio {
             r.mini_to_quantity   = mini_to_quantity;
             r.to_quantity.amount = 0;
             r.fee_receiver       = name();
-            r.hub_trx_id         = capi_checksum256();
+            r.hub_trx_id         = checksum256();
             r.hub_trx_time_slot  = 0;
          });
       }
@@ -1741,14 +1741,14 @@ namespace eosio {
       auto _hubtrxs = hubtrxs_table( _self, _self.value );
       auto idx = _hubtrxs.get_index<"hubtrxid"_n>();
       const auto& hub_trx_p = idx.find(fixed_bytes<32>(hub_trx_id.hash));
-      eosio_assert(hub_trx_p != idx.end(), "hub_trx_id not exist!");
+      eosio::check(hub_trx_p != idx.end(), "hub_trx_id not exist!");
 
       auto _origtrxs = origtrxs_table( _self, hub_trx_p->to_chain.value );
       auto idx2 = _origtrxs.get_index<"trxid"_n>();
       auto it = idx2.find( fixed_bytes<32>(hub_trx_id.hash) );
-      eosio_assert( it == idx2.end(), "original trx still exist!");
+      eosio::check( it == idx2.end(), "original trx still exist!");
 
-      string memo = "rollback hub transaction: " + capi_checksum256_to_string(hub_trx_id);
+      string memo = "rollback hub transaction: " + checksum256_to_string(hub_trx_id);
 
       bool ibc_withdraw = false;
       auto sym_code_raw = hub_trx_p->to_quantity.symbol.code().raw();
@@ -1787,7 +1787,7 @@ namespace eosio {
       _hubtrxs.modify( *hub_trx_p, same_payer, [&]( auto& r ) {
          r.to_quantity.amount = 0;
          r.fee_receiver       = name();
-         r.hub_trx_id         = capi_checksum256();
+         r.hub_trx_id         = checksum256();
          r.hub_trx_time_slot  = 0;
       });
    }
@@ -1831,14 +1831,14 @@ namespace eosio {
 
    void token::hubinit( name hub_account ){
       check_admin_auth();
-      eosio_assert( _hubgs.is_open == false, "already init");
+      eosio::check( _hubgs.is_open == false, "already init");
       _hubgs.is_open = true;
       _hubgs.hub_account = hub_account;
    }
 
    void token::feetransfer( name from, name to, asset quantity, string memo ){
       require_auth( _self );
-      eosio_assert( from == _hubgs.hub_account, "from == _hubgs.hub_account assert failed");
+      eosio::check( from == _hubgs.hub_account, "from == _hubgs.hub_account assert failed");
       sub_balance( _hubgs.hub_account, quantity );
       add_balance( to, quantity, _self );
    }
@@ -1892,7 +1892,7 @@ namespace eosio {
 
    void token::check_admin_auth(){
       if ( ! has_auth(_self) ){
-         eosio_assert( _admin_st.admin != name() && is_account( _admin_st.admin ),"admin account not exist");
+         eosio::check( _admin_st.admin != name() && is_account( _admin_st.admin ),"admin account not exist");
          require_auth( _admin_st.admin );
       }
    }
@@ -1902,7 +1902,7 @@ namespace eosio {
 
       auto _rmdunrbs = rmdunrbs_table( _self, peerchain_name.value );
       auto itr = _rmdunrbs.find( id );
-      eosio_assert( itr != _rmdunrbs.end(), "record not exist!");
+      eosio::check( itr != _rmdunrbs.end(), "record not exist!");
 
       auto _rmdunrbs2 = rmdunrbs_table2( _self, _self.value );
       _rmdunrbs2.emplace( _self, [&]( auto& r ) {
@@ -1920,11 +1920,11 @@ namespace eosio {
 
       auto _rmdunrbs2 = rmdunrbs_table2( _self, _self.value );
       auto idx = _rmdunrbs2.get_index<"trxid"_n>();
-      auto trx_p = idx.find(fixed_bytes<32>(trx_id.hash));
-      eosio_assert(trx_p!=idx.end(),"trx_id not exist in table rmdunrbs2");
+      auto trx_p = idx.find(fixed_bytes<32>(trx_id));
+      eosio::check(trx_p!=idx.end(),"trx_id not exist in table rmdunrbs2");
 
       transfer_action_info action_info = trx_p->action;
-      string memo = "rollback transaction: " + capi_checksum256_to_string(trx_id);
+      string memo = "rollback transaction: " + checksum256_to_string(trx_id);
       print( memo.c_str() );
 
       bool ibc_withdraw = false;

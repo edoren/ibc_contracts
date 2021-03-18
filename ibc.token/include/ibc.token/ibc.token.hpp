@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/singleton.hpp>
+#include <eosiolib/core/eosio/asset.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
+#include <eosiolib/contracts/eosio/singleton.hpp>
 #include <ibc.token/types.hpp>
 #include <ibc.proxy/ibc.proxy.hpp>
 
@@ -34,10 +34,10 @@ namespace eosio {
       name                                   from_chain;
       transaction_id_type                    orig_trx_id;
       std::vector<char>                      orig_trx_packed_trx_receipt;
-      std::vector<capi_checksum256>          orig_trx_merkle_path;
+      std::vector<checksum256>          orig_trx_merkle_path;
       uint32_t                               orig_trx_block_num;
       std::vector<char>                      orig_trx_block_header_data;
-      std::vector<capi_checksum256>          orig_trx_block_id_merkle_path;
+      std::vector<checksum256>          orig_trx_block_id_merkle_path;
       uint32_t                               anchor_block_num;
       name                                   to;
       asset                                  quantity;
@@ -189,10 +189,10 @@ namespace eosio {
                  const name&                            from_chain,
                  const transaction_id_type&             orig_trx_id,          // redundant, facilitate indexing and checking
                  const std::vector<char>&               orig_trx_packed_trx_receipt,
-                 const std::vector<capi_checksum256>&   orig_trx_merkle_path,
+                 const std::vector<checksum256>&   orig_trx_merkle_path,
                  const uint32_t&                        orig_trx_block_num,   // redundant, facilitate indexing and checking
                  const std::vector<char>&               orig_trx_block_header,
-                 const std::vector<capi_checksum256>&   orig_trx_block_id_merkle_path,
+                 const std::vector<checksum256>&   orig_trx_block_id_merkle_path,
                  const uint32_t&                        anchor_block_num,
                  const name&                            to,                   // redundant, facilitate indexing and checking
                  const asset&                           quantity,             // redundant, facilitate indexing and checking
@@ -204,10 +204,10 @@ namespace eosio {
       void cashconfirm( const name&                            from_chain,
                         const transaction_id_type&             cash_trx_id,            // redundant, facilitate indexing and checking
                         const std::vector<char>&               cash_trx_packed_trx_receipt,
-                        const std::vector<capi_checksum256>&   cash_trx_merkle_path,
+                        const std::vector<checksum256>&   cash_trx_merkle_path,
                         const uint32_t&                        cash_trx_block_num,     // redundant, facilitate indexing and checking
                         const std::vector<char>&               cash_trx_block_header,
-                        const std::vector<capi_checksum256>&   cash_trx_block_id_merkle_path,
+                        const std::vector<checksum256>&   cash_trx_block_id_merkle_path,
                         const uint32_t&                        anchor_block_num,
                         const transaction_id_type&             orig_trx_id );          // redundant, facilitate indexing and checking
 
@@ -490,7 +490,7 @@ namespace eosio {
 
          uint64_t primary_key()const { return id; }
          uint64_t by_time_slot()const { return block_time_slot; }
-         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(trx_id.hash); }
+         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(trx_id); }
       };
       typedef eosio::multi_index< "origtrxs"_n, original_trx_info,
          indexed_by<"tslot"_n, const_mem_fun<original_trx_info, uint64_t,        &original_trx_info::by_time_slot> >,  // used by ibc plugin
@@ -516,14 +516,14 @@ namespace eosio {
       struct [[eosio::table]] cash_trx_info {
          uint64_t              seq_num; // set by seq_num in cash action, and must be increase one by one, and start from 1
          uint64_t              block_time_slot;
-         capi_checksum256      trx_id;
+         checksum256      trx_id;
          transfer_action_type  action;                // redundant, facilitate indexing and checking
-         capi_checksum256      orig_trx_id;           // redundant, facilitate indexing and checking
+         checksum256      orig_trx_id;           // redundant, facilitate indexing and checking
          uint64_t              orig_trx_block_num;    // very important!
 
          uint64_t primary_key()const { return seq_num; }
          uint64_t by_time_slot()const { return block_time_slot; }
-         fixed_bytes<32> by_orig_trx_id()const { return fixed_bytes<32>(orig_trx_id.hash); }
+         fixed_bytes<32> by_orig_trx_id()const { return fixed_bytes<32>(orig_trx_id); }
          uint64_t by_orig_trx_block_num()const { return orig_trx_block_num; }
       };
       typedef eosio::multi_index< "cashtrxs"_n, cash_trx_info,
@@ -557,7 +557,7 @@ namespace eosio {
          transfer_action_info    action; // used when execute rollback
 
          uint64_t primary_key()const { return id; }
-         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(trx_id.hash); }
+         fixed_bytes<32> by_trx_id()const { return fixed_bytes<32>(trx_id); }
       };
       typedef eosio::multi_index< "rmdunrbs2"_n, deleted_unrollbackable_trx_info2,
           indexed_by<"trxid"_n, const_mem_fun<deleted_unrollbackable_trx_info2, fixed_bytes<32>, &deleted_unrollbackable_trx_info2::by_trx_id> >
@@ -566,7 +566,7 @@ namespace eosio {
       void withdraw( name from, name peerchain_name, name peerchain_receiver, asset quantity, string memo );
       void sub_balance( name owner, asset value );
       void add_balance( name owner, asset value, name ram_payer );
-      void verify_merkle_path( const std::vector<capi_checksum256>& merkle_path, digest_type check );
+      void verify_merkle_path( const std::vector<checksum256>& merkle_path, digest_type check );
 
 #ifdef HUB
       /**
@@ -592,13 +592,13 @@ namespace eosio {
          name                  from_account;
          asset                 from_quantity;
          asset                 mini_to_quantity; /// minimum transfer amount
-         capi_checksum256      orig_trx_id;
+         checksum256      orig_trx_id;
          name                  to_chain;
          name                  to_account;
          string                orig_pure_memo;
          asset                 to_quantity;
          name                  fee_receiver;
-         capi_checksum256      hub_trx_id;
+         checksum256      hub_trx_id;
          uint64_t              hub_trx_time_slot;
          uint8_t               forward_times;
          uint8_t               backward_times;

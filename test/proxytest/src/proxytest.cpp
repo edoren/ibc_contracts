@@ -3,8 +3,8 @@
  *  @copyright defined in eos/LICENSE.txt
  */
 
-#include <eosiolib/action.hpp>
-#include <eosiolib/transaction.hpp>
+#include <eosiolib/contracts/eosio/action.hpp>
+#include <eosiolib/contracts/eosio/transaction.hpp>
 #include <proxytest/proxytest.hpp>
 
 namespace eosio {

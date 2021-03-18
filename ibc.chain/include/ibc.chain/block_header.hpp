@@ -4,10 +4,10 @@
  */
 #pragma once
 
-#include <eosiolib/time.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/producer_schedule.hpp>
-#include <eosiolib/transaction.hpp>
+#include <eosiolib/core/eosio/time.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
+#include <eosiolib/contracts/eosio/producer_schedule.hpp>
+#include <eosiolib/contracts/eosio/transaction.hpp>
 #include <ibc.chain/types.hpp>
 
 namespace eosio {
@@ -20,16 +20,16 @@ namespace eosio {
       name                                      producer;
       uint16_t                                  confirmed;
       block_id_type                             previous;
-      capi_checksum256                          transaction_mroot;
-      capi_checksum256                          action_mroot;
+      checksum256                          transaction_mroot;
+      checksum256                          action_mroot;
       uint32_t                                  schedule_version;
       std::optional<eosio::producer_schedule>   new_producers;
       extensions_type                           header_extensions;
 
-      capi_checksum256     digest()const;
+      checksum256     digest()const;
       block_id_type        id() const;
       uint32_t             block_num() const { return num_from_id(previous) + 1; }
-      static uint32_t      num_from_id(const capi_checksum256& id);
+      static uint32_t      num_from_id(const checksum256& id);
       std::optional<eosio::producer_schedule> get_ext_new_producers( uint16_t ext_id ) const;
 
       EOSLIB_SERIALIZE(block_header, (timestamp)(producer)(confirmed)(previous)(transaction_mroot)(action_mroot)
@@ -37,11 +37,11 @@ namespace eosio {
    };
 
    struct signed_block_header : public block_header {
-      capi_signature     producer_signature;
+      signature     producer_signature;
 
       EOSLIB_SERIALIZE_DERIVED( signed_block_header, block_header, (producer_signature) )
    };
-
+/*
    struct key_weight {
       public_key        key;
       uint16_t          weight;
@@ -61,7 +61,7 @@ namespace eosio {
       block_signing_authority authority;
       EOSLIB_SERIALIZE( producer_authority, (producer_name)(authority) )
    };
-
+*/
    struct producer_authority_schedule {
       uint32_t                            version;
       std::vector<producer_authority>     producers;

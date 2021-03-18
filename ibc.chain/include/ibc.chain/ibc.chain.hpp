@@ -4,9 +4,9 @@
  */
 #pragma once
 
-#include <eosiolib/asset.hpp>
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/singleton.hpp>
+#include <eosiolib/core/eosio/asset.hpp>
+#include <eosiolib/contracts/eosio/eosio.hpp>
+#include <eosiolib/contracts/eosio/singleton.hpp>
 #include <ibc.chain/block_header.hpp>
 #include <ibc.chain/pbft.hpp>
 #include <ibc.chain/merkle.hpp>
@@ -52,7 +52,7 @@ namespace eosio {
       uint32_t                   active_schedule_id;
       uint32_t                   pending_schedule_id;
       incremental_merkle         blockroot_merkle;
-      capi_public_key            block_signing_key;   // redundant, used for make signature verification faster
+      public_key                 block_signing_key;   // redundant, used for make signature verification faster
       bool                       is_anchor_block = false;
 
       uint64_t primary_key()const { return block_num; }
@@ -171,10 +171,10 @@ namespace eosio {
                                                        const uint32_t&      layer,
                                                        const digest_type&   digest ) {
          chaindb _chaindb( ibc_chain_contract, ibc_chain_contract.value );
-         eosio_assert( _chaindb.begin() != _chaindb.end(), (string("_chaindb of scpoe: ") + ibc_chain_contract.to_string() + " not exist").c_str());
+         eosio::check( _chaindb.begin() != _chaindb.end(), (string("_chaindb of scpoe: ") + ibc_chain_contract.to_string() + " not exist").c_str());
          auto bhs = _chaindb.get( block_num );
-         eosio_assert( bhs.is_anchor_block, (string("block ") + std::to_string(block_num) + " is not anchor block").c_str());
-         eosio_assert( is_equal_capi_checksum256( get_inc_merkle_node_by_layer(bhs.blockroot_merkle,layer), digest ), "checksum256 not equal");
+         eosio::check( bhs.is_anchor_block, (string("block ") + std::to_string(block_num) + " is not anchor block").c_str());
+         eosio::check( is_equal_checksum256( get_inc_merkle_node_by_layer(bhs.blockroot_merkle,layer), digest ), "checksum256 not equal");
       }
 
       /**
@@ -184,17 +184,17 @@ namespace eosio {
                                                              const uint32_t&      block_num,
                                                              const digest_type&   transaction_mroot ) {
          chaindb _chaindb( ibc_chain_contract, ibc_chain_contract.value );
-         eosio_assert( _chaindb.begin() != _chaindb.end(), (string("_chaindb of scpoe: ") + ibc_chain_contract.to_string() + " not exist").c_str());
+         eosio::check( _chaindb.begin() != _chaindb.end(), (string("_chaindb of scpoe: ") + ibc_chain_contract.to_string() + " not exist").c_str());
          auto bhs = _chaindb.get( block_num );
-         eosio_assert( bhs.is_anchor_block, (string("block ") + std::to_string(block_num) + " is not anchor block").c_str());
-         eosio_assert( is_equal_capi_checksum256( bhs.header.transaction_mroot, transaction_mroot ), "provided transaction_mroot not correct");
+         eosio::check( bhs.is_anchor_block, (string("block ") + std::to_string(block_num) + " is not anchor block").c_str());
+         eosio::check( is_equal_checksum256( bhs.header.transaction_mroot, transaction_mroot ), "provided transaction_mroot not correct");
       }
 
       static void require_relay_auth( name ibc_contract_account, name relay ) {
          if ( check_relay_auth ) {
             relays _relays( ibc_contract_account, ibc_contract_account.value );
             auto it = _relays.find( relay.value );
-            eosio_assert( it != _relays.end(), "this account is not registered as relay");
+            eosio::check( it != _relays.end(), "this account is not registered as relay");
             require_auth( relay );
          }
       }
@@ -222,15 +222,15 @@ namespace eosio {
       void remove_header_if_exist( uint32_t block_num );
 
       // producer schedule related
-      capi_public_key   get_public_key_by_producer( uint64_t id, const name& producer ) const;
-      name              get_producer_by_public_key( uint64_t id, const capi_public_key& public_key ) const;
+      public_key   get_public_key_by_producer( uint64_t id, const name& producer ) const;
+      name              get_producer_by_public_key( uint64_t id, const public_key& public_key ) const;
 
       // producer signature related
       digest_type       bhs_sig_digest( const block_header_state& hs ) const;
       void              assert_producer_signature( const digest_type& digest,
-                                                   const capi_signature& signature,
-                                                   const capi_public_key& pub_key ) const;
-      capi_public_key   get_public_key_form_signature( digest_type digest, signature_type sig ) const;
+                                                   const signature& signature,
+                                                   const public_key& pub_key ) const;
+      public_key   get_public_key_form_signature( digest_type digest, signature_type sig ) const;
 
       bool only_one_eosio_bp();
 
